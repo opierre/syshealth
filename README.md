@@ -78,9 +78,9 @@ monitor.stop()
 ### Run Tests & Linting
 
 ```bash
-uv run pytest          # run all tests
-uv run ruff format .   # auto-format
-uv run ruff check .    # lint
+uv sync --group test && uv run pytest   # run all tests
+uv run ruff format .                    # auto-format
+uv run ruff check .                     # lint
 ```
 
 ### Rebuild After Rust Changes
@@ -228,7 +228,7 @@ pymonitor/
 │   └── exporter/
 │       ├── mod.rs                  # 🦀 Exporter trait + factory (create_exporter)
 │       ├── mqtt.rs                 # 🦀 MQTT exporter (rumqttc, non-blocking channel)
-│       └── victoria_metrics.rs    # 🦀 VictoriaMetrics exporter (ureq, non-blocking channel)
+│       └── victoria_metrics.rs     # 🦀 VictoriaMetrics exporter (ureq, non-blocking channel)
 ├── python/
 │   └── pymonitor/
 │       ├── _rust_monitor.pyi       # Auto-generated type stubs (do not edit manually)
