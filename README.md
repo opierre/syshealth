@@ -51,6 +51,9 @@ uv run pymonitor process --name brave.exe
 
 ### Background Exporter (Python API)
 
+> [!IMPORTANT]
+> When using the MQTT exporter, ensure you have installed the optional dependency (`pip install pymonitor[mqtt]` or `uv pip install ".[mqtt]"`) and that your MQTT broker is up and running before starting the exporter.
+
 You can run PyMonitor as a background thread in your own Python applications. It will automatically load your configuration from `~/.pymonitor/config.json`.
 
 ```python

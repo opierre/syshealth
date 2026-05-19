@@ -69,6 +69,26 @@ class PyMonitor:
         if not (0 <= priority <= 5):
             raise ValueError("Priority must be between 0 and 5.")
 
+        if exporter_type == ExporterType.MQTT:
+            try:
+                import paho.mqtt.client as mqtt
+            except ImportError as exc:
+                raise ImportError(
+                    "The paho-mqtt library is required for the MQTT exporter. "
+                    "Install it with `pip install pymonitor[mqtt]`."
+                ) from exc
+            
+            host, port_str = endpoint.split(":") if ":" in endpoint else (endpoint, "1883")
+            port = int(port_str)
+            client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+            try:
+                client.connect(host, port, keepalive=5)
+                client.disconnect()
+            except Exception as e:
+                raise ConnectionError(
+                    f"Failed to connect to MQTT broker at {endpoint}. Ensure the MQTT broker is up and running."
+                ) from e
+
         # Start monitoring thread
         self._monitor_handle = _rust_monitor.start_monitoring(exporter_type.value, endpoint, refresh_rate, priority)
 

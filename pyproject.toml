@@ -36,6 +36,7 @@ python-source = "python"
 module-name = "pymonitor._rust_monitor"
 
 [dependency-groups]
+mqtt = ["paho-mqtt>=2.1.0"]
 dev = [
     "ruff>=0.15.2",
     "ty>=0.0.18",
