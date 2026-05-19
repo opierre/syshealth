@@ -39,7 +39,18 @@ uv pip install -e ".[dev]"
 
 `uv` detects `maturin` as the build backend in `pyproject.toml`, compiles `src/lib.rs`, and links the resulting shared library into your local Python environment automatically.
 
-### Run
+### Start Dependencies
+
+If you plan to use the background exporter for **MQTT** or **VictoriaMetrics**, ensure these services are running. You can quickly start them using `docker-compose` or `podman-compose` with the provided file (*it uses a persistent volume for VictoriaMetrics locally, which seamlessly acts as an ephemeral volume in CI*):
+
+```bash
+docker-compose up -d
+# OR with podman
+podman-compose up -d
+```
+
+
+### Run (CLI)
 
 ```bash
 # Show a full system dashboard
