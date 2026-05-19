@@ -22,9 +22,9 @@ classifiers = [
 ]
 requires-python = ">=3.12"
 dependencies = [
-    "typer>=0.24.1",
-    "rich>=14.3.3",
-    "pygments>=2.20.0"
+    "typer==0.25.1",
+    "rich==15.0.0",
+    "pygments>=2.20.0",
 ]
 
 [project.scripts]
@@ -38,8 +38,8 @@ module-name = "pymonitor._rust_monitor"
 [dependency-groups]
 mqtt = ["paho-mqtt>=2.1.0"]
 dev = [
-    "ruff>=0.15.2",
-    "ty>=0.0.18",
+    "ruff>=0.15.13",
+    "ty>=0.0.37",
 ]
 test = [
     "pytest>=9.0.2",
