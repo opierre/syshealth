@@ -11,6 +11,7 @@ mod exporter;
 #[pyclass]
 pub struct MonitorHandle {
     is_running: Arc<AtomicBool>,
+    errors: Arc<std::sync::Mutex<Vec<String>>>,
 }
 
 #[pymethods]
@@ -18,6 +19,13 @@ impl MonitorHandle {
     /// Signals the background thread to safely terminate.
     fn stop(&self) {
         self.is_running.store(false, Ordering::Relaxed);
+    }
+
+    fn get_errors(&self) -> Vec<String> {
+        let mut errs = self.errors.lock().unwrap();
+        let result = errs.clone();
+        errs.clear();
+        result
     }
 }
 
@@ -49,6 +57,9 @@ fn get_process_metrics(name: &str) -> PyResult<Vec<(u32, f32, f32)>> {
 #[pyclass(get_all)]
 #[derive(Serialize)]
 pub struct GlobalMetricsSnapshot {
+    pub source: String,
+    pub timestamp_ms: u64,
+    pub units: std::collections::HashMap<String, String>,
     pub cpu_usage: f32,
     pub cpu_brand: String,
     pub ram_percent: f32,
@@ -160,7 +171,25 @@ fn get_global_metrics_internal(sys: &mut System, networks: &mut sysinfo::Network
         top_processes.push((process.name().to_string_lossy().into_owned(), process.pid().as_u32(), process.cpu_usage()));
     }
 
+    let mut units = std::collections::HashMap::new();
+    units.insert("cpu_usage".to_string(), "percent".to_string());
+    units.insert("ram_percent".to_string(), "percent".to_string());
+    units.insert("max_ram".to_string(), "bytes".to_string());
+    units.insert("disk_percent".to_string(), "percent".to_string());
+    units.insert("available_disk".to_string(), "bytes".to_string());
+    units.insert("boot_time".to_string(), "seconds".to_string());
+    units.insert("swap_total".to_string(), "bytes".to_string());
+    units.insert("swap_used".to_string(), "bytes".to_string());
+    units.insert("network_rx_bytes".to_string(), "bytes".to_string());
+    units.insert("network_tx_bytes".to_string(), "bytes".to_string());
+    units.insert("cpu_temperature".to_string(), "celsius".to_string());
+    units.insert("per_core_usage".to_string(), "percent".to_string());
+    units.insert("load_avg".to_string(), "load".to_string());
+
     GlobalMetricsSnapshot {
+        source: "pymonitor".to_string(),
+        timestamp_ms: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as u64,
+        units,
         cpu_usage: sys.global_cpu_usage(),
         cpu_brand,
         ram_percent,
@@ -212,6 +241,9 @@ fn start_monitoring(exporter_type: String, endpoint: String, refresh_rate: u64, 
     let is_running = Arc::new(AtomicBool::new(true));
     let is_running_clone = is_running.clone();
 
+    let errors = Arc::new(std::sync::Mutex::new(Vec::new()));
+    let errors_clone = errors.clone();
+
     std::thread::spawn(move || {
         use thread_priority::*;
         // Map 0 (highest) to 5 (lowest) to thread priority
@@ -237,7 +269,7 @@ fn start_monitoring(exporter_type: String, endpoint: String, refresh_rate: u64, 
         let mut components = sysinfo::Components::new_with_refreshed_list();
         let mut disks = sysinfo::Disks::new_with_refreshed_list();
 
-        let mut exporter = match exporter::create_exporter(&exporter_type, &endpoint) {
+        let mut exporter = match exporter::create_exporter(&exporter_type, &endpoint, errors_clone.clone()) {
             Ok(e) => e,
             Err(e) => {
                 eprintln!("Failed to create exporter: {}", e);
@@ -248,13 +280,16 @@ fn start_monitoring(exporter_type: String, endpoint: String, refresh_rate: u64, 
         while is_running_clone.load(Ordering::Relaxed) {
             let metrics = get_global_metrics_internal(&mut sys, &mut networks, &mut components, &mut disks);
             if let Err(e) = exporter.export(&metrics) {
-                eprintln!("Failed to export metrics: {}", e);
+                let mut errs = errors_clone.lock().unwrap();
+                if errs.len() < 100 {
+                    errs.push(format!("Failed to export metrics: {}", e));
+                }
             }
             std::thread::sleep(std::time::Duration::from_secs(refresh_rate));
         }
     });
 
-    Ok(MonitorHandle { is_running })
+    Ok(MonitorHandle { is_running, errors })
 }
 
 /// The Rust module definition exported to Python.
