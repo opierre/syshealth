@@ -49,17 +49,6 @@ docker-compose up -d
 podman-compose up -d
 ```
 
-
-### Run (CLI)
-
-```bash
-# Show a full system dashboard
-uv run pymonitor global-metrics
-
-# Monitor a specific process by name
-uv run pymonitor process --name brave.exe
-```
-
 ### Background Exporter (Python API)
 
 > [!IMPORTANT]
