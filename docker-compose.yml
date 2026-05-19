@@ -1,14 +1,13 @@
 services:
   mosquitto:
-    image: eclipse-mosquitto:latest
+    image: docker.io/library/eclipse-mosquitto:latest
     ports:
       - "1883:1883"
-    volumes:
-      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-    restart: unless-stopped
+    command: sh -c "mkdir -p /etc/mosquitto && echo 'listener 1883' > /etc/mosquitto/mosquitto.conf && echo 'allow_anonymous true' >> /etc/mosquitto/mosquitto.conf && /usr/sbin/mosquitto -c /etc/mosquitto/mosquitto.conf"
+    # The Ubuntu AppArmor profile for Mosquitto restricts it from reading configuration files anywhere except /etc/mosquitto/.
 
   victoriametrics:
-    image: victoriametrics/victoria-metrics:latest
+    image: docker.io/victoriametrics/victoria-metrics:latest
     ports:
       - "8428:8428"
     volumes:
