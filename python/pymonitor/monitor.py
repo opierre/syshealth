@@ -88,6 +88,19 @@ class PyMonitor:
                 raise ConnectionError(
                     f"Failed to connect to MQTT broker at {endpoint}. Ensure the MQTT broker is up and running."
                 ) from e
+        elif exporter_type == ExporterType.VICTORIAMETRICS:
+            import urllib.request
+            from urllib.parse import urlparse
+            
+            try:
+                parsed_url = urlparse(endpoint)
+                health_url = f"{parsed_url.scheme}://{parsed_url.netloc}/health"
+                urllib.request.urlopen(health_url, timeout=5)
+            except Exception as exc:
+                raise ConnectionError(
+                    f"Failed to connect to VictoriaMetrics at {endpoint}. Ensure the VictoriaMetrics database "
+                    "is up and running."
+                ) from exc
 
         # Start monitoring thread
         self._monitor_handle = _rust_monitor.start_monitoring(exporter_type.value, endpoint, refresh_rate, priority)
