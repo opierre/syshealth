@@ -87,5 +87,5 @@ def get_process_metrics(name: builtins.str) -> builtins.list[tuple[builtins.int,
     Grab usage metrics for specific processes by name.
     """
 
-def start_monitoring(exporter_type: builtins.str, endpoint: builtins.str, refresh_rate: builtins.int, priority: builtins.int) -> MonitorHandle: ...
+def start_monitoring(exporter_type: builtins.str, endpoint: builtins.str, refresh_rate: builtins.int, priority: builtins.int, duration: typing.Optional[builtins.int]) -> MonitorHandle: ...
 

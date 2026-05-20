@@ -66,10 +66,6 @@ with PyMonitor() as monitor:
     # The 'duration' argument will automatically stop the thread after 60 seconds.
     monitor.start(refresh_rate=5, exporter_type=ExporterType.MQTT, priority=5, duration=60)
 
-# Do your other work while metrics are exported automatically in Rust
-time.sleep(60)
-
-monitor.stop()
     # Do your other work while metrics are exported automatically in Rust
     time.sleep(60)
     

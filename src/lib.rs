@@ -237,7 +237,7 @@ fn get_global_metrics() -> PyResult<GlobalMetricsSnapshot> {
 
 #[gen_stub_pyfunction]
 #[pyfunction]
-fn start_monitoring(exporter_type: String, endpoint: String, refresh_rate: u64, priority: u8) -> PyResult<MonitorHandle> {
+fn start_monitoring(exporter_type: String, endpoint: String, refresh_rate: u64, priority: u8, duration: Option<u64>) -> PyResult<MonitorHandle> {
     let is_running = Arc::new(AtomicBool::new(true));
     let is_running_clone = is_running.clone();
 
@@ -277,7 +277,13 @@ fn start_monitoring(exporter_type: String, endpoint: String, refresh_rate: u64, 
             }
         };
 
+        let start_time = std::time::Instant::now();
         while is_running_clone.load(Ordering::Relaxed) {
+            if let Some(d) = duration {
+                if start_time.elapsed().as_secs() >= d {
+                    break;
+                }
+            }
             let metrics = get_global_metrics_internal(&mut sys, &mut networks, &mut components, &mut disks);
             if let Err(e) = exporter.export(&metrics) {
                 let mut errs = errors_clone.lock().unwrap();

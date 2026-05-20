@@ -221,3 +221,15 @@ def test_context_manager() -> None:
     assert monitor._monitor_handle is None
 
 
+def test_duration_argument() -> None:
+    """Test that the duration argument automatically stops the thread without error."""
+    monitor = PyMonitor()
+    monitor.start(refresh_rate=1, exporter_type=ExporterType.MQTT, priority=5, duration=1)
+    
+    # Wait for slightly more than the duration
+    time.sleep(1.5)
+    
+    # The rust thread should have exited without crashing.
+    # Calling stop() to clean up the python handle explicitly.
+    monitor.stop()
+    assert monitor._monitor_handle is None

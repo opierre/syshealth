@@ -60,13 +60,20 @@ class PyMonitor:
             except json.JSONDecodeError:
                 return ""
 
-    def start(self, refresh_rate: int = 5, exporter_type: ExporterType = ExporterType.MQTT, priority: int = 5) -> None:
+    def start(
+        self,
+        refresh_rate: int = 5,
+        exporter_type: ExporterType = ExporterType.MQTT,
+        priority: int = 5,
+        duration: int | None = None,
+    ) -> None:
         """Starts the background Rust monitoring thread.
 
         Args:
             refresh_rate: polling interval in seconds. Defaults to 5.
             exporter_type: type of exporter to use. Defaults to ExporterType.MQTT.
             priority: thread priority from 0 (highest) to 5 (lowest). Defaults to 5.
+            duration: optional amount of time in seconds to run before automatically stopping.
 
         Raises:
             RuntimeError: if the monitor is already actively running.
@@ -120,7 +127,9 @@ class PyMonitor:
                 ) from exc
 
         # Start monitoring thread
-        self._monitor_handle = _rust_monitor.start_monitoring(exporter_type.value, endpoint, refresh_rate, priority)
+        self._monitor_handle = _rust_monitor.start_monitoring(
+            exporter_type.value, endpoint, refresh_rate, priority, duration
+        )
 
     def stop(self) -> None:
         """Stops the background Rust monitoring thread."""
