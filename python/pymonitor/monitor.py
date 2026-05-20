@@ -27,7 +27,11 @@ class PyMonitor:
         self._monitor_handle: _rust_monitor.MonitorHandle | None = None
 
     def _get_endpoint(self, exporter_type: str) -> str:
-        """Retrieves the endpoint URL for the given exporter type from the config."""
+        """Retrieves the endpoint URL for the given exporter type from the config.
+
+        Args:
+            exporter_type: type of exporter to use.
+        """
         config_dir = Path.home() / ".pymonitor"
         config_file = config_dir / "config.json"
 
@@ -58,6 +62,11 @@ class PyMonitor:
 
         Raises:
             RuntimeError: if the monitor is already actively running.
+            ValueError:
+                * if no endpoint has been found for selected exporter type.
+                * if priority is not in range(6).
+            ImportError: if paho-mqtt has not been installed and exporter_type == ExporterType.MQTT.
+            ConnectionError: if VictoriaMetrics database is not reachable and exporter_type == ExporterType.VICTORIAMETRICS.
         """
         if self._monitor_handle is not None:
             raise RuntimeError("Monitor is already running.")
@@ -77,7 +86,7 @@ class PyMonitor:
                     "The paho-mqtt library is required for the MQTT exporter. "
                     "Install it with `pip install pymonitor[mqtt]`."
                 ) from exc
-            
+
             host, port_str = endpoint.split(":") if ":" in endpoint else (endpoint, "1883")
             port = int(port_str)
             client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
@@ -91,7 +100,7 @@ class PyMonitor:
         elif exporter_type == ExporterType.VICTORIAMETRICS:
             import urllib.request
             from urllib.parse import urlparse
-            
+
             try:
                 parsed_url = urlparse(endpoint)
                 health_url = f"{parsed_url.scheme}://{parsed_url.netloc}/health"
