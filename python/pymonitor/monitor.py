@@ -1,13 +1,13 @@
 """A lightweight monitor for computer constants."""
 
 import json
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 from . import _rust_monitor
 
 
-class ExporterType(str, Enum):
+class ExporterType(StrEnum):
     """Supported backend exporter types."""
 
     MQTT = "mqtt"
@@ -34,7 +34,8 @@ class PyMonitor:
         """Context manager exit point."""
         self.stop()
 
-    def _get_endpoint(self, exporter_type: str) -> str:
+    @staticmethod
+    def _get_endpoint(exporter_type: str) -> str:
         """Retrieves the endpoint URL for the given exporter type from the config.
 
         Args:

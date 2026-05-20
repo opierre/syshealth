@@ -33,7 +33,7 @@ def _print_adjacent(left, right) -> None:
     from rich.measure import Measurement
 
     opts = console.options
-    left_w  = Measurement.get(console, opts, left).maximum
+    left_w = Measurement.get(console, opts, left).maximum
     right_w = Measurement.get(console, opts, right).maximum
     gap = 1  # one-space padding between columns
     if left_w + right_w + gap <= console.width:
@@ -124,9 +124,11 @@ def global_metrics():
 
     sys_info_table.add_row("OS:", f"{metrics.os_name} {metrics.os_version} (Kernel: {metrics.kernel_version})")
     sys_info_table.add_row("Hostname:", metrics.hostname)
-    
+
     physical_cores = metrics.core_count_physical if metrics.core_count_physical else "?"
-    sys_info_table.add_row("CPU:", f"{metrics.cpu_brand} ({physical_cores} Cores / {metrics.core_count_logical} Threads)")
+    sys_info_table.add_row(
+        "CPU:", f"{metrics.cpu_brand} ({physical_cores} Cores / {metrics.core_count_logical} Threads)"
+    )
     sys_info_table.add_row("GPU:", gpu_brand)
     sys_info_table.add_row("Total RAM:", f"{max_ram_gb:.2f} GB")
     sys_info_table.add_row("Available Disk:", f"{available_disk_gb:.2f} GB ({metrics.disk_percent:.2f}%)")
@@ -134,7 +136,7 @@ def global_metrics():
 
     # Build System Users panel
     ADMIN_GROUPS = {"administrators", "administrateurs", "admins", "sudo", "wheel"}
-    USER_GROUPS  = {"users", "utilisateurs"}
+    USER_GROUPS = {"users", "utilisateurs"}
     real_users = []
     for username, groups in metrics.users:
         groups_lower = {g.lower() for g in groups}
@@ -226,9 +228,10 @@ def global_metrics():
 def install_service():
     """Install PyMonitor as a background service for the current OS."""
     sys_name = platform.system()
-    
+
     if sys_name == "Windows":
         import ctypes
+
         try:
             is_admin = ctypes.windll.shell32.IsUserAnAdmin()
         except Exception:
@@ -262,13 +265,13 @@ def install_service():
         if not delete_it:
             console.print("[red]Aborting installation.[/red]")
             return
-            
+
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as prog:
             t = prog.add_task("[cyan]Stopping and removing existing service...", total=None)
             try:
                 if sys_name == "Windows":
                     subprocess.run(["sc", "stop", "PyMonitor"], capture_output=True)
-                    time.sleep(2) # Give it time to stop
+                    time.sleep(2)  # Give it time to stop
                     subprocess.run(["sc", "delete", "PyMonitor"], capture_output=True)
                 elif sys_name == "Linux":
                     subprocess.run(["systemctl", "stop", "pymonitor.service"], capture_output=True)
@@ -287,40 +290,65 @@ def install_service():
         console=console,
     ) as progress:
         task = progress.add_task(f"[cyan]Installing PyMonitor background service for {sys_name}...", total=None)
-        
+
         try:
             if sys_name == "Windows":
                 windows_script = repo_root / "scripts" / "windows" / "pymonitor_windows_service.py"
                 if not windows_script.exists():
                     raise FileNotFoundError(f"Service script not found at {windows_script}")
-                
+
                 # Install service using pywin32
                 subprocess.run(
                     [sys.executable, str(windows_script), "--startup", "auto", "install"],
-                    check=True, capture_output=True, text=True
+                    check=True,
+                    capture_output=True,
+                    text=True,
                 )
             elif sys_name == "Linux":
                 linux_script = repo_root / "scripts" / "linux" / "pymonitor.service"
                 if not linux_script.exists():
                     raise FileNotFoundError(f"Service unit file not found at {linux_script}")
-                
+
                 target_service = Path("/etc/systemd/system/pymonitor.service")
                 shutil.copy(linux_script, target_service)
-                
+
                 subprocess.run(["systemctl", "daemon-reload"], check=True, capture_output=True)
                 subprocess.run(["systemctl", "enable", "pymonitor.service"], check=True, capture_output=True)
-            
+
             progress.update(task, description=f"[bold green]✔ Successfully installed {sys_name} service![/bold green]")
         except Exception as e:
             progress.update(task, description=f"[bold red] ❌ Failed to install service: {e}[/bold red]")
             return
-            
-    if sys_name == "Windows":
-        console.print("\n[green]Service is installed and set to start automatically on boot.[/green]")
-        console.print("You can start it manually now by running: [bold]Start-Service PyMonitor[/bold]")
-    elif sys_name == "Linux":
-        console.print("\n[green]Service is installed and enabled on boot.[/green]")
-        console.print("You can start it manually now by running: [bold]systemctl start pymonitor[/bold]")
+
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as prog:
+        task = prog.add_task("[cyan]Starting service...", total=None)
+        try:
+            if sys_name == "Windows":
+                subprocess.run(["sc", "start", "PyMonitor"], check=True, capture_output=True)
+            elif sys_name == "Linux":
+                subprocess.run(["systemctl", "start", "pymonitor"], check=True, capture_output=True)
+
+            time.sleep(1)  # Give it a moment to start
+
+            # Verify it's running
+            is_running = False
+            if sys_name == "Windows":
+                res = subprocess.run(["sc", "query", "PyMonitor"], capture_output=True, text=True)
+                is_running = "RUNNING" in res.stdout
+            elif sys_name == "Linux":
+                res = subprocess.run(["systemctl", "is-active", "pymonitor"], capture_output=True, text=True)
+                is_running = res.stdout.strip() == "active"
+
+            if is_running:
+                prog.update(task, description="[bold green]✔ Service is now running in the background![/bold green]")
+            else:
+                prog.update(
+                    task,
+                    description="[bold red] ❌ Service failed to start or immediately exited. Check logs.[/bold red]",
+                )
+        except subprocess.CalledProcessError as exc:
+            err_msg = exc.stderr.decode("utf-8", errors="ignore") if exc.stderr else str(exc)
+            prog.update(task, description=f"[bold red] ❌ Failed to start service: {err_msg}[/bold red]")
 
 
 if __name__ == "__main__":
