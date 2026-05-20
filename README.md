@@ -57,18 +57,23 @@ podman-compose up -d
 You can run PyMonitor as a background thread in your own Python applications. It will automatically load your configuration from `~/.pymonitor/config.json`.
 
 ```python
-from pymonitor.monitor import PyMonitor
+from pymonitor.monitor import ExporterType, PyMonitor
 import time
 
-monitor = PyMonitor()
-
-# Start background monitoring thread (priority 0 to 5)
-monitor.start(refresh_rate=5, exporter_type="mqtt", priority=5)
+# Use the context manager to ensure graceful shutdown
+with PyMonitor() as monitor:
+    # Start background monitoring thread (priority 0 to 5)
+    # The 'duration' argument will automatically stop the thread after 60 seconds.
+    monitor.start(refresh_rate=5, exporter_type=ExporterType.MQTT, priority=5, duration=60)
 
 # Do your other work while metrics are exported automatically in Rust
 time.sleep(60)
 
 monitor.stop()
+    # Do your other work while metrics are exported automatically in Rust
+    time.sleep(60)
+    
+# monitor.stop() is automatically called when exiting the 'with' block!
 ```
 
 ---

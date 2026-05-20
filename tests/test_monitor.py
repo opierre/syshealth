@@ -211,3 +211,13 @@ def test_mqtt_subscriber_receives_metrics() -> None:
     finally:
         monitor.stop()
         collector.stop()
+
+
+def test_context_manager() -> None:
+    """Test that the Context Manager starts and stops the monitor."""
+    with PyMonitor() as monitor:
+        monitor.start(refresh_rate=60, exporter_type=ExporterType.MQTT, priority=5)
+        assert monitor._monitor_handle is not None
+    assert monitor._monitor_handle is None
+
+

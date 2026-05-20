@@ -26,6 +26,14 @@ class PyMonitor:
         """Initialize PyMonitor instance."""
         self._monitor_handle: _rust_monitor.MonitorHandle | None = None
 
+    def __enter__(self) -> "PyMonitor":
+        """Context manager entry point."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Context manager exit point."""
+        self.stop()
+
     def _get_endpoint(self, exporter_type: str) -> str:
         """Retrieves the endpoint URL for the given exporter type from the config.
 
