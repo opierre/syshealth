@@ -246,6 +246,8 @@ pymonitor/
 │   └── windows/
 │       └── pymonitor_windows_service.py    # 🐍 Windows Service implementation
 ├── src/
+│   ├── bin/
+│   │   └── stub_gen.rs                     # 🦀 Standalone Rust binary to generate Python type stubs
 │   ├── lib.rs                              # 🦀 Rust extension — sysinfo polling, PyO3 bindings, background thread
 │   └── exporter/
 │       ├── mod.rs                          # 🦀 Exporter trait + factory (create_exporter)
