@@ -37,6 +37,7 @@ module-name = "pymonitor._rust_monitor"
 
 [dependency-groups]
 mqtt = ["paho-mqtt>=2.1.0"]
+windows-service = ["pywin32>=311; sys_platform == 'win32'"]
 dev = [
     "ruff>=0.15.13",
     "ty>=0.0.37",

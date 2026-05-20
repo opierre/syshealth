@@ -1,0 +1,15 @@
+[Unit]
+Description=PyMonitor Background Service
+After=network.target
+
+[Service]
+Type=simple
+# Ensure the path below matches the virtual environment path
+ExecStart=/usr/bin/env uv run python scripts/service_runner.py
+WorkingDirectory=/opt/pymonitor
+Restart=always
+RestartSec=10
+User=nobody
+
+[Install]
+WantedBy=multi-user.target
