@@ -1,16 +1,21 @@
 """CLI for PyMonitor."""
 
+import os
 import platform
+import shutil
 import subprocess
+import sys
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from pymonitor.monitor import PyMonitor
 from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
-from typer import Option, Typer
+from typer import Option, Typer, confirm
 
 app = Typer(help="PyMonitor CLI for tracking system constants.", add_completion=True)
 console = Console()
@@ -215,6 +220,107 @@ def global_metrics():
         net_table.add_row("No interfaces found", "-", "-", "-")
 
     console.print(Panel(Align.center(net_table), title="Network Instant Metrics", expand=False, border_style="blue"))
+
+
+@app.command()
+def install_service():
+    """Install PyMonitor as a background service for the current OS."""
+    sys_name = platform.system()
+    
+    if sys_name == "Windows":
+        import ctypes
+        try:
+            is_admin = ctypes.windll.shell32.IsUserAnAdmin()
+        except Exception:
+            is_admin = False
+    elif sys_name == "Linux":
+        is_admin = os.getuid() == 0
+    else:
+        console.print(f"[bold red]Unsupported OS for service installation: {sys_name}[/bold red]")
+        return
+
+    if not is_admin:
+        console.print("[bold red] ❌ Error: Administrator / Root privileges required to install services.[/bold red]")
+        console.print("[yellow]Please restart your terminal as Administrator (Windows) or use sudo (Linux).[/yellow]")
+        return
+
+    repo_root = Path(__file__).resolve().parent.parent.parent
+
+    # Check if service already exists
+    service_exists = False
+    if sys_name == "Windows":
+        # sc query returns 0 if service exists, 1060 if it does not exist
+        result = subprocess.run(["sc", "query", "PyMonitor"], capture_output=True)
+        service_exists = result.returncode == 0
+    elif sys_name == "Linux":
+        target_service = Path("/etc/systemd/system/pymonitor.service")
+        service_exists = target_service.exists()
+
+    if service_exists:
+        console.print("[yellow]PyMonitor service is already installed on this system.[/yellow]")
+        delete_it = confirm("Do you want to stop and delete the current service to install the new one?")
+        if not delete_it:
+            console.print("[red]Aborting installation.[/red]")
+            return
+            
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), console=console) as prog:
+            t = prog.add_task("[cyan]Stopping and removing existing service...", total=None)
+            try:
+                if sys_name == "Windows":
+                    subprocess.run(["sc", "stop", "PyMonitor"], capture_output=True)
+                    time.sleep(2) # Give it time to stop
+                    subprocess.run(["sc", "delete", "PyMonitor"], capture_output=True)
+                elif sys_name == "Linux":
+                    subprocess.run(["systemctl", "stop", "pymonitor.service"], capture_output=True)
+                    subprocess.run(["systemctl", "disable", "pymonitor.service"], capture_output=True)
+                    if target_service.exists():
+                        target_service.unlink()
+                    subprocess.run(["systemctl", "daemon-reload"], capture_output=True)
+                prog.update(t, description="[bold green]✔ Existing service removed![/bold green]")
+            except Exception as e:
+                prog.update(t, description=f"[bold red] ❌ Failed to remove existing service: {e}[/bold red]")
+                return
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task(f"[cyan]Installing PyMonitor background service for {sys_name}...", total=None)
+        
+        try:
+            if sys_name == "Windows":
+                windows_script = repo_root / "scripts" / "windows" / "pymonitor_windows_service.py"
+                if not windows_script.exists():
+                    raise FileNotFoundError(f"Service script not found at {windows_script}")
+                
+                # Install service using pywin32
+                subprocess.run(
+                    [sys.executable, str(windows_script), "--startup", "auto", "install"],
+                    check=True, capture_output=True, text=True
+                )
+            elif sys_name == "Linux":
+                linux_script = repo_root / "scripts" / "linux" / "pymonitor.service"
+                if not linux_script.exists():
+                    raise FileNotFoundError(f"Service unit file not found at {linux_script}")
+                
+                target_service = Path("/etc/systemd/system/pymonitor.service")
+                shutil.copy(linux_script, target_service)
+                
+                subprocess.run(["systemctl", "daemon-reload"], check=True, capture_output=True)
+                subprocess.run(["systemctl", "enable", "pymonitor.service"], check=True, capture_output=True)
+            
+            progress.update(task, description=f"[bold green]✔ Successfully installed {sys_name} service![/bold green]")
+        except Exception as e:
+            progress.update(task, description=f"[bold red] ❌ Failed to install service: {e}[/bold red]")
+            return
+            
+    if sys_name == "Windows":
+        console.print("\n[green]Service is installed and set to start automatically on boot.[/green]")
+        console.print("You can start it manually now by running: [bold]Start-Service PyMonitor[/bold]")
+    elif sys_name == "Linux":
+        console.print("\n[green]Service is installed and enabled on boot.[/green]")
+        console.print("You can start it manually now by running: [bold]systemctl start pymonitor[/bold]")
 
 
 if __name__ == "__main__":
