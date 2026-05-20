@@ -19,6 +19,25 @@ class PyMonitorService(win32serviceutil.ServiceFramework):
         win32serviceutil.ServiceFramework.__init__(self, args)
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
         self.monitor = PyMonitor()
+        
+        self.refresh_rate = 5
+        self.priority = 5
+        self.exporter = "victoriametrics"
+        
+        # Parse arguments passed from Service Control Manager
+        # args[0] is service name
+        if len(args) > 1:
+            try:
+                self.refresh_rate = int(args[1])
+            except ValueError:
+                pass
+        if len(args) > 2:
+            try:
+                self.priority = int(args[2])
+            except ValueError:
+                pass
+        if len(args) > 3:
+            self.exporter = args[3]
 
     def SvcStop(self):
         """Service Stop Request."""
@@ -28,13 +47,24 @@ class PyMonitorService(win32serviceutil.ServiceFramework):
     def SvcDoRun(self):
         """Service Run Request."""
         servicemanager.LogMsg(
-            servicemanager.EVENTLOG_INFORMATION_TYPE, servicemanager.PYS_SERVICE_STARTED, (self._svc_name_, "")
+            servicemanager.EVENTLOG_INFORMATION_TYPE, 
+            servicemanager.PYS_SERVICE_STARTED, 
+            (self._svc_name_, f"Refresh: {self.refresh_rate}s, Priority: {self.priority}, Exporter: {self.exporter}")
         )
         self.main()
 
     def main(self):
         """Main function called when service starts."""
-        self.monitor.start(refresh_rate=5, exporter_type=ExporterType.VICTORIAMETRICS, priority=5)
+        try:
+            exporter_enum = ExporterType(self.exporter)
+        except ValueError:
+            exporter_enum = ExporterType.VICTORIAMETRICS
+
+        self.monitor.start(
+            refresh_rate=self.refresh_rate, 
+            exporter_type=exporter_enum, 
+            priority=self.priority
+        )
         # Block indefinitely until stop event is received (0 CPU usage)
         win32event.WaitForSingleObject(self.hWaitStop, win32event.INFINITE)
         self.monitor.stop()

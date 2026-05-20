@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 # Ensure the path below matches the virtual environment path
-ExecStart=/usr/bin/env uv run python scripts/service_runner.py
+ExecStart=/usr/bin/env uv run python scripts/linux/service_runner.py --refresh-rate 5 --priority 5 --exporter victoriametrics
 WorkingDirectory=/opt/pymonitor
 Restart=always
 RestartSec=10
