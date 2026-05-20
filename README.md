@@ -220,24 +220,45 @@ uv run pymonitor process -n chrome.exe
 
 ---
 
+### `install-service`
+
+Installs PyMonitor as a background service for the current OS (Windows or Linux). Requires Administrator or root privileges.
+
+```bash
+# Windows: open terminal as Administrator
+# Linux: run with sudo
+uv run pymonitor install-service
+```
+
+> [!NOTE]
+> If the service is already installed, you will be prompted to stop and replace it.
+
+---
+
 ## 🏗️ Architecture
 
 ```
 pymonitor/
 ├── src/
-│   ├── lib.rs                      # 🦀 Rust extension — sysinfo polling, PyO3 bindings, background thread
+│   └── linux/
+│       ├── pymonitor.service               # systemd service configuration
+│       └── service_runner.py               # 🐍 Main program to run with systemd
+│   └── windows/
+│       └── pymonitor_windows_service.py    # 🐍 Windows Service implementation
+├── src/
+│   ├── lib.rs                              # 🦀 Rust extension — sysinfo polling, PyO3 bindings, background thread
 │   └── exporter/
-│       ├── mod.rs                  # 🦀 Exporter trait + factory (create_exporter)
-│       ├── mqtt.rs                 # 🦀 MQTT exporter (rumqttc, non-blocking channel)
-│       └── victoria_metrics.rs     # 🦀 VictoriaMetrics exporter (ureq, non-blocking channel)
+│       ├── mod.rs                          # 🦀 Exporter trait + factory (create_exporter)
+│       ├── mqtt.rs                         # 🦀 MQTT exporter (rumqttc, non-blocking channel)
+│       └── victoria_metrics.rs             # 🦀 VictoriaMetrics exporter (ureq, non-blocking channel)
 ├── python/
 │   └── pymonitor/
-│       ├── _rust_monitor.pyi       # Auto-generated type stubs (do not edit manually)
-│       ├── monitor.py              # Python wrapper — PyMonitor + ExporterType enum
-│       └── cli.py                  # Typer CLI + Rich display logic
+│       ├── _rust_monitor.pyi               # 🐍 Auto-generated type stubs (do not edit manually)
+│       ├── monitor.py                      # 🐍 Python wrapper — PyMonitor + ExporterType enum
+│       └── cli.py                          # 🐍 Typer CLI + Rich display logic
 └── tests/
-    ├── test_cli.py                 # Integration tests for all CLI commands
-    └── test_monitor.py             # Integration tests: Rust backend + MQTT subscriber
+    ├── test_cli.py                         # 🐍 Integration tests for all CLI commands
+    └── test_monitor.py                     # 🐍 Integration tests: Rust backend + MQTT subscriber
 ```
 
 ### Data flow — background exporter
@@ -251,15 +272,6 @@ sysinfo (Rust crate)
                                     └─▶ MqttExporter / VictoriaMetricsExporter
                                             └─▶ Broker / Database
 ```
-
-### Backend legend
-
-| Badge | Meaning |
-|-------|---------|
-| 🦀 Rust (`sysinfo`) | Data sourced directly from the `sysinfo` Rust crate via PyO3 |
-| 🐍 Python | Data obtained through Python's `subprocess`, `platform`, or pure logic |
-
----
 
 ## 📡 Receiving Exported Data
 
@@ -337,22 +349,6 @@ PyMonitor POSTs the same JSON snapshot to the VictoriaMetrics import endpoint.
 
 > [!NOTE]
 > Query stored metrics via MetricsQL or `/api/v1/query` using field names as metric names, e.g. `cpu_usage`, `ram_percent`.
-
----
-
-## 📦 Dependencies
-
-| Package | Role |
-|---------|------|
-| `sysinfo` (Rust) | Cross-platform hardware & OS metrics |
-| `pyo3` | Rust ↔ Python FFI bridge |
-| `pyo3-stub-gen` | Auto-generates `.pyi` type stubs from Rust code |
-| `rumqttc` (Rust) | MQTT client for the background exporter |
-| `ureq` (Rust) | HTTP client for the VictoriaMetrics exporter |
-| `serde` / `serde_json` (Rust) | JSON serialization of `GlobalMetricsSnapshot` |
-| `thread-priority` (Rust) | Cross-platform OS thread priority management |
-| `typer` | CLI argument parsing |
-| `rich` | Terminal formatting & colour output |
 
 ---
 
