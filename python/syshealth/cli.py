@@ -247,7 +247,7 @@ def install_service():
         import ctypes
 
         try:
-            is_admin = ctypes.windll.shell32.IsUserAnAdmin()
+            is_admin = ctypes.windll.shell32.IsUserAnAdmin()    # ty: ignore[unresolved-attribute]
         except Exception:
             is_admin = False
     elif sys_name == "Linux":

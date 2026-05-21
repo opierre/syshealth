@@ -89,7 +89,6 @@ jobs:
           uv export --format requirements-txt --all-groups -o requirements.txt
       - uses: pypa/gh-action-pip-audit@v1.1.0
         with:
-          virtual-environment: venv/
           no-deps: true
 
   build-wheels:
