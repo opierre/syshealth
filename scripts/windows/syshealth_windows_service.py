@@ -18,21 +18,21 @@ import servicemanager
 import win32event
 import win32service
 import win32serviceutil
-from pymonitor.monitor import ExporterType, PyMonitor
+from syshealth.monitor import ExporterType, SysHealth
 
 
-class PyMonitorService(win32serviceutil.ServiceFramework):
-    """PyMonitor Windows Service Implementation."""
+class SysHealthService(win32serviceutil.ServiceFramework):
+    """SysHealth Windows Service Implementation."""
 
-    _svc_name_ = "PyMonitor"
-    _svc_display_name_ = "PyMonitor Background Service"
-    _svc_description_ = "Continuously monitors system metrics and exports them using PyMonitor."
+    _svc_name_ = "SysHealth"
+    _svc_display_name_ = "SysHealth Background Service"
+    _svc_description_ = "Continuously monitors system metrics and exports them using SysHealth."
 
     def __init__(self, args):
         """Init Service."""
         win32serviceutil.ServiceFramework.__init__(self, args)
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
-        self.monitor = PyMonitor()
+        self.monitor = SysHealth()
         
         self.refresh_rate = 5
         self.priority = 5
@@ -87,7 +87,7 @@ class PyMonitorService(win32serviceutil.ServiceFramework):
 if __name__ == "__main__":
     if len(sys.argv) == 1:
         servicemanager.Initialize()
-        servicemanager.PrepareToHostSingle(PyMonitorService)
+        servicemanager.PrepareToHostSingle(SysHealthService)
         servicemanager.StartServiceCtrlDispatcher()
     else:
-        win32serviceutil.HandleCommandLine(PyMonitorService)
+        win32serviceutil.HandleCommandLine(SysHealthService)

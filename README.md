@@ -1,8 +1,8 @@
-# 🖥️🩺 PyMonitor
+# 🖥️🩺 SysHealth
 
 > A highly optimized, cross-platform system resource monitor with a Rust core and a beautiful Python CLI.
 
-PyMonitor pushes the performance-critical work (polling loops, hardware inspection, network sampling) into compiled **Rust** code via [PyO3](https://pyo3.rs/), while keeping the Python surface clean, ergonomic, and easy to extend.
+SysHealth pushes the performance-critical work (polling loops, hardware inspection, network sampling) into compiled **Rust** code via [PyO3](https://pyo3.rs/), while keeping the Python surface clean, ergonomic, and easy to extend.
 
 ---
 
@@ -52,16 +52,16 @@ podman-compose up -d
 ### Background Exporter (Python API)
 
 > [!IMPORTANT]
-> When using the MQTT exporter, ensure you have installed the optional dependency (`pip install pymonitor[mqtt]` or `uv pip install ".[mqtt]"`) and that your MQTT broker is up and running before starting the exporter.
+> When using the MQTT exporter, ensure you have installed the optional dependency (`pip install syshealth[mqtt]` or `uv pip install ".[mqtt]"`) and that your MQTT broker is up and running before starting the exporter.
 
-You can run PyMonitor as a background thread in your own Python applications. It will automatically load your configuration from `~/.pymonitor/config.json`.
+You can run SysHealth as a background thread in your own Python applications. It will automatically load your configuration from `~/.syshealth/config.json`.
 
 ```python
-from pymonitor.monitor import ExporterType, PyMonitor
+from syshealth.monitor import ExporterType, SysHealth
 import time
 
 # Use the context manager to ensure graceful shutdown
-with PyMonitor() as monitor:
+with SysHealth() as monitor:
     # Start background monitoring thread (priority 0 to 5)
     # The 'duration' argument will automatically stop the thread after 60 seconds.
     monitor.start(refresh_rate=5, exporter_type=ExporterType.MQTT, priority=5, duration=60)
@@ -92,7 +92,7 @@ Every time you modify `src/lib.rs` you need to recompile the extension and regen
 # 1. Recompile & reinstall the Rust extension into the active venv
 uv pip install -e .
 
-# 2. Regenerate Python type stubs (updates python/pymonitor/_rust_monitor.pyi)
+# 2. Regenerate Python type stubs (updates python/syshealth/_rust_monitor.pyi)
 cargo run --bin stub_gen
 ```
 
@@ -135,7 +135,7 @@ uv pip install -e .
 cargo run --bin stub_gen
 ```
 
-### Step 4 — Display it in `python/pymonitor/cli.py`
+### Step 4 — Display it in `python/syshealth/cli.py`
 
 ```python
 # Inside global_metrics():
@@ -163,7 +163,7 @@ mock_metrics.my_new_metric = 42.0
 Displays a full system snapshot dashboard. Panels are automatically placed side-by-side when the terminal is wide enough.
 
 ```bash
-uv run pymonitor global-metrics
+uv run syshealth global-metrics
 ```
 
 ![global-metrics demo](docs/global-metrics.gif)
@@ -200,9 +200,9 @@ uv run pymonitor global-metrics
 Monitors all running instances of a named process and shows per-PID resource usage, sorted by CPU consumption.
 
 ```bash
-uv run pymonitor process --name python
+uv run syshealth process --name python
 # or short form:
-uv run pymonitor process -n chrome.exe
+uv run syshealth process -n chrome.exe
 ```
 
 ![process demo](docs/process.gif)
@@ -222,12 +222,12 @@ uv run pymonitor process -n chrome.exe
 
 ### `install-service`
 
-Installs PyMonitor as a background service for the current OS (Windows or Linux). Requires Administrator or root privileges.
+Installs SysHealth as a background service for the current OS (Windows or Linux). Requires Administrator or root privileges.
 
 ```bash
 # Windows: open terminal as Administrator
 # Linux: run with sudo
-uv run pymonitor install-service
+uv run syshealth install-service
 ```
 
 > [!NOTE]
@@ -238,13 +238,13 @@ uv run pymonitor install-service
 ## 🏗️ Architecture
 
 ```
-pymonitor/
+syshealth/
 ├── src/
 │   └── linux/
-│       ├── pymonitor.service               # systemd service configuration
+│       ├── syshealth.service               # systemd service configuration
 │       └── service_runner.py               # 🐍 Main program to run with systemd
 │   └── windows/
-│       └── pymonitor_windows_service.py    # 🐍 Windows Service implementation
+│       └── syshealth_windows_service.py    # 🐍 Windows Service implementation
 ├── src/
 │   ├── bin/
 │   │   └── stub_gen.rs                     # 🦀 Standalone Rust binary to generate Python type stubs
@@ -254,9 +254,9 @@ pymonitor/
 │       ├── mqtt.rs                         # 🦀 MQTT exporter (rumqttc, non-blocking channel)
 │       └── victoria_metrics.rs             # 🦀 VictoriaMetrics exporter (ureq, non-blocking channel)
 ├── python/
-│   └── pymonitor/
+│   └── syshealth/
 │       ├── _rust_monitor.pyi               # 🐍 Auto-generated type stubs (do not edit manually)
-│       ├── monitor.py                      # 🐍 Python wrapper — PyMonitor + ExporterType enum
+│       ├── monitor.py                      # 🐍 Python wrapper — SysHealth + ExporterType enum
 │       └── cli.py                          # 🐍 Typer CLI + Rich display logic
 └── tests/
     ├── test_cli.py                         # 🐍 Integration tests for all CLI commands
@@ -279,17 +279,17 @@ sysinfo (Rust crate)
 
 ### MQTT
 
-PyMonitor publishes a **JSON object** (all fields of `GlobalMetricsSnapshot`) to a single topic every `refresh_rate` seconds.
+SysHealth publishes a **JSON object** (all fields of `GlobalMetricsSnapshot`) to a single topic every `refresh_rate` seconds.
 
 | Item | Value |
 |------|-------|
-| **Broker address** | `~/.pymonitor/config.json` → `endpoints.mqtt` (e.g. `localhost:1883`) |
-| **Topic** | `pymonitor/metrics` |
+| **Broker address** | `~/.syshealth/config.json` → `endpoints.mqtt` (e.g. `localhost:1883`) |
+| **Topic** | `syshealth/metrics` |
 | **QoS** | 0 (At Most Once) |
 | **Retain** | No |
 | **Payload format** | UTF-8 JSON |
 
-**Payload fields** (all in one JSON object on `pymonitor/metrics`):
+**Payload fields** (all in one JSON object on `syshealth/metrics`):
 
 | JSON key | Type | Description |
 |----------|------|-------------|
@@ -332,7 +332,7 @@ def on_message(client, userdata, msg):
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.on_message = on_message
 client.connect("localhost", 1883)
-client.subscribe("pymonitor/metrics")
+client.subscribe("syshealth/metrics")
 client.loop_forever()
 ```
 
@@ -340,11 +340,11 @@ client.loop_forever()
 
 ### VictoriaMetrics
 
-PyMonitor POSTs the same JSON snapshot to the VictoriaMetrics import endpoint.
+SysHealth POSTs the same JSON snapshot to the VictoriaMetrics import endpoint.
 
 | Item | Value |
 |------|-------|
-| **Endpoint** | `~/.pymonitor/config.json` → `endpoints.victoriametrics` (e.g. `http://localhost:8428/api/v1/import`) |
+| **Endpoint** | `~/.syshealth/config.json` → `endpoints.victoriametrics` (e.g. `http://localhost:8428/api/v1/import`) |
 | **HTTP method** | `POST` |
 | **Content-Type** | `application/json` |
 | **Payload format** | JSON (same field list as the MQTT table above) |

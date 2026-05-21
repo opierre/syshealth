@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Integration tests for the PyMonitor Python wrapper and Rust backend."""
+"""Integration tests for the SysHealth Python wrapper and Rust backend."""
 
 import json
 import threading
@@ -20,7 +20,7 @@ import time
 
 import paho.mqtt.client as mqtt_client
 import pytest
-from pymonitor.monitor import ExporterType, PyMonitor
+from syshealth.monitor import ExporterType, SysHealth
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -28,7 +28,7 @@ from pymonitor.monitor import ExporterType, PyMonitor
 
 MQTT_HOST = "localhost"
 MQTT_PORT = 1883
-MQTT_TOPIC = "pymonitor/metrics"
+MQTT_TOPIC = "syshealth/metrics"
 
 # Fields expected in every published JSON payload
 REQUIRED_METRIC_KEYS = {
@@ -65,7 +65,7 @@ REQUIRED_METRIC_KEYS = {
 
 def test_get_process_metrics() -> None:
     """Test that the Rust backend returns process metrics."""
-    monitor = PyMonitor()
+    monitor = SysHealth()
     processes = monitor.get_process_metrics("python")
     assert isinstance(processes, list)
     for process in processes:
@@ -75,7 +75,7 @@ def test_get_process_metrics() -> None:
 
 def test_global_metrics() -> None:
     """Test that the Rust backend successfully returns global metrics."""
-    monitor = PyMonitor()
+    monitor = SysHealth()
     metrics = monitor.get_global_metrics()
 
     assert isinstance(metrics.cpu_usage, float)
@@ -98,7 +98,7 @@ def test_global_metrics() -> None:
 
 def test_start_raises_if_already_running() -> None:
     """Starting a second time without stopping must raise RuntimeError."""
-    monitor = PyMonitor()
+    monitor = SysHealth()
     monitor.start(refresh_rate=60, exporter_type=ExporterType.MQTT, priority=5)
     try:
         with pytest.raises(RuntimeError, match="already running"):
@@ -109,7 +109,7 @@ def test_start_raises_if_already_running() -> None:
 
 def test_stop_is_idempotent() -> None:
     """Calling stop() multiple times must not raise."""
-    monitor = PyMonitor()
+    monitor = SysHealth()
     monitor.start(refresh_rate=60, exporter_type=ExporterType.MQTT, priority=5)
     monitor.stop()
     monitor.stop()  # second call must be silent
@@ -117,7 +117,7 @@ def test_stop_is_idempotent() -> None:
 
 def test_invalid_priority_raises() -> None:
     """Priority outside [0, 5] must raise ValueError."""
-    monitor = PyMonitor()
+    monitor = SysHealth()
     with pytest.raises(ValueError, match="[Pp]riority"):
         monitor.start(refresh_rate=1, exporter_type=ExporterType.MQTT, priority=99)
 
@@ -174,7 +174,7 @@ class _MqttCollector:
 
 
 def test_mqtt_subscriber_receives_metrics() -> None:
-    """Start PyMonitor, subscribe to MQTT, and assert at least one valid JSON payload arrives.
+    """Start SysHealth, subscribe to MQTT, and assert at least one valid JSON payload arrives.
 
     The test uses the real Mosquitto broker running on localhost:1883.
     The monitoring thread is configured with a 1-second refresh rate so the
@@ -183,7 +183,7 @@ def test_mqtt_subscriber_receives_metrics() -> None:
     collector = _MqttCollector()
     collector.start()
 
-    monitor = PyMonitor()
+    monitor = SysHealth()
     monitor.start(refresh_rate=1, exporter_type=ExporterType.MQTT, priority=5)
 
     try:
@@ -229,7 +229,7 @@ def test_mqtt_subscriber_receives_metrics() -> None:
 
 def test_context_manager() -> None:
     """Test that the Context Manager starts and stops the monitor."""
-    with PyMonitor() as monitor:
+    with SysHealth() as monitor:
         monitor.start(refresh_rate=60, exporter_type=ExporterType.MQTT, priority=5)
         assert monitor._monitor_handle is not None
     assert monitor._monitor_handle is None
@@ -237,7 +237,7 @@ def test_context_manager() -> None:
 
 def test_duration_argument() -> None:
     """Test that the duration argument automatically stops the thread without error."""
-    monitor = PyMonitor()
+    monitor = SysHealth()
     monitor.start(refresh_rate=1, exporter_type=ExporterType.MQTT, priority=5, duration=1)
     
     # Wait for slightly more than the duration

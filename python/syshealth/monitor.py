@@ -28,7 +28,7 @@ class ExporterType(StrEnum):
     VICTORIAMETRICS = "victoriametrics"
 
 
-class PyMonitor:
+class SysHealth:
     """A lightweight monitor for computer constants.
 
     This class provides a Python interface to the Rust-based
@@ -37,10 +37,10 @@ class PyMonitor:
     """
 
     def __init__(self):
-        """Initialize PyMonitor instance."""
+        """Initialize SysHealth instance."""
         self._monitor_handle: _rust_monitor.MonitorHandle | None = None
 
-    def __enter__(self) -> "PyMonitor":
+    def __enter__(self) -> "SysHealth":
         """Context manager entry point."""
         return self
 
@@ -55,7 +55,7 @@ class PyMonitor:
         Args:
             exporter_type: type of exporter to use.
         """
-        config_dir = Path.home() / ".pymonitor"
+        config_dir = Path.home() / ".syshealth"
         config_file = config_dir / "config.json"
 
         # Create default config if it doesn't exist
@@ -114,7 +114,7 @@ class PyMonitor:
             except ImportError as exc:
                 raise ImportError(
                     "The paho-mqtt library is required for the MQTT exporter. "
-                    "Install it with `pip install pymonitor[mqtt]`."
+                    "Install it with `pip install syshealth[mqtt]`."
                 ) from exc
 
             host, port_str = endpoint.split(":") if ":" in endpoint else (endpoint, "1883")

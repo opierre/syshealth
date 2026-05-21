@@ -16,11 +16,11 @@ import argparse
 import signal
 import threading
 
-from pymonitor.monitor import PyMonitor
+from syshealth.monitor import SysHealth
 
 
 def main():
-    parser = argparse.ArgumentParser(description="PyMonitor background service runner")
+    parser = argparse.ArgumentParser(description="SysHealth background service runner")
     parser.add_argument("--refresh-rate", type=int, default=5, help="Refresh rate in seconds")
     parser.add_argument("--priority", type=int, default=5, help="Thread priority (0-5)")
     parser.add_argument(
@@ -36,7 +36,7 @@ def main():
     signal.signal(signal.SIGTERM, handler)
     signal.signal(signal.SIGINT, handler)
 
-    with PyMonitor() as monitor:
+    with SysHealth() as monitor:
         # Start without duration to run infinitely
         monitor.start(refresh_rate=args.refresh_rate, exporter_type=args.exporter, priority=args.priority)
         # Block with 0 CPU usage until a signal is received

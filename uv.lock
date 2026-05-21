@@ -183,55 +183,6 @@ wheels = [
 ]
 
 [[package]]
-name = "pymonitor"
-version = "0.0.1"
-source = { editable = "." }
-dependencies = [
-    { name = "pygments" },
-    { name = "rich" },
-    { name = "typer" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "ruff" },
-    { name = "ty" },
-]
-mqtt = [
-    { name = "paho-mqtt" },
-]
-test = [
-    { name = "paho-mqtt" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-mock" },
-]
-windows-service = [
-    { name = "pywin32", marker = "sys_platform == 'win32'" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "pygments", specifier = ">=2.20.0" },
-    { name = "rich", specifier = "==15.0.0" },
-    { name = "typer", specifier = "==0.25.1" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "ruff", specifier = ">=0.15.13" },
-    { name = "ty", specifier = ">=0.0.37" },
-]
-mqtt = [{ name = "paho-mqtt", specifier = ">=2.1.0" }]
-test = [
-    { name = "paho-mqtt", specifier = ">=2.1.0" },
-    { name = "pytest", specifier = ">=9.0.2" },
-    { name = "pytest-cov", specifier = ">=7.0.0" },
-    { name = "pytest-mock", specifier = ">=3.15.1" },
-]
-windows-service = [{ name = "pywin32", marker = "sys_platform == 'win32'", specifier = ">=311" }]
-
-[[package]]
 name = "pytest"
 version = "9.0.2"
 source = { registry = "https://pypi.org/simple" }
@@ -335,6 +286,55 @@ sdist = { url = "https://files.pythonhosted.org/packages/58/15/8b3609fd3830ef7b2
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e0/f9/0595336914c5619e5f28a1fb793285925a8cd4b432c9da0a987836c7f822/shellingham-1.5.4-py2.py3-none-any.whl", hash = "sha256:7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686", size = 9755, upload-time = "2023-10-24T04:13:38.866Z" },
 ]
+
+[[package]]
+name = "syshealth"
+version = "0.0.1"
+source = { editable = "." }
+dependencies = [
+    { name = "pygments" },
+    { name = "rich" },
+    { name = "typer" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "ruff" },
+    { name = "ty" },
+]
+mqtt = [
+    { name = "paho-mqtt" },
+]
+test = [
+    { name = "paho-mqtt" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-mock" },
+]
+windows-service = [
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pygments", specifier = ">=2.20.0" },
+    { name = "rich", specifier = "==15.0.0" },
+    { name = "typer", specifier = "==0.25.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "ruff", specifier = ">=0.15.13" },
+    { name = "ty", specifier = ">=0.0.37" },
+]
+mqtt = [{ name = "paho-mqtt", specifier = ">=2.1.0" }]
+test = [
+    { name = "paho-mqtt", specifier = ">=2.1.0" },
+    { name = "pytest", specifier = ">=9.0.2" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
+    { name = "pytest-mock", specifier = ">=3.15.1" },
+]
+windows-service = [{ name = "pywin32", marker = "sys_platform == 'win32'", specifier = ">=311" }]
 
 [[package]]
 name = "ty"

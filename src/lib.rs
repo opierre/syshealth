@@ -201,7 +201,7 @@ fn get_global_metrics_internal(sys: &mut System, networks: &mut sysinfo::Network
     units.insert("load_avg".to_string(), "load".to_string());
 
     GlobalMetricsSnapshot {
-        source: "pymonitor".to_string(),
+        source: "syshealth".to_string(),
         timestamp_ms: std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as u64,
         units,
         cpu_usage: sys.global_cpu_usage(),

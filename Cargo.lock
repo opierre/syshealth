@@ -611,20 +611,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pymonitor"
-version = "0.0.1"
-dependencies = [
- "pyo3",
- "pyo3-stub-gen",
- "rumqttc",
- "serde",
- "serde_json",
- "sysinfo",
- "thread-priority",
- "ureq",
-]
-
-[[package]]
 name = "pyo3"
 version = "0.28.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1110,6 +1096,20 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "syshealth"
+version = "0.0.1"
+dependencies = [
+ "pyo3",
+ "pyo3-stub-gen",
+ "rumqttc",
+ "serde",
+ "serde_json",
+ "sysinfo",
+ "thread-priority",
+ "ureq",
 ]
 
 [[package]]

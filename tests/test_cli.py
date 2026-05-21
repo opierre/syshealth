@@ -17,7 +17,7 @@ from datetime import datetime
 from unittest.mock import MagicMock
 
 import pytest
-from pymonitor.cli import app
+from syshealth.cli import app
 from typer.testing import CliRunner
 
 runner = CliRunner()
@@ -25,8 +25,8 @@ runner = CliRunner()
 
 @pytest.fixture
 def mock_monitor(mocker):
-    """Fixture to mock the PyMonitor instance used by the CLI."""
-    monitor_mock = mocker.patch("pymonitor.cli.MONITOR")
+    """Fixture to mock the SysHealth instance used by the CLI."""
+    monitor_mock = mocker.patch("syshealth.cli.MONITOR")
     return monitor_mock
 
 

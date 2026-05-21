@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""CLI for PyMonitor."""
+"""CLI for SysHealth."""
 
 import os
 import platform
@@ -23,18 +23,18 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from pymonitor.monitor import PyMonitor
 from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
+from syshealth.monitor import SysHealth
 from typer import Option, Typer, confirm
 
-app = Typer(help="PyMonitor CLI for tracking system constants.", add_completion=True)
+app = Typer(help="SysHealth CLI for tracking system constants.", add_completion=True)
 console = Console()
 
-MONITOR = PyMonitor()
+MONITOR = SysHealth()
 
 
 def _print_adjacent(left, right) -> None:
@@ -240,7 +240,7 @@ def global_metrics():
 
 @app.command()
 def install_service():
-    """Install PyMonitor as a background service for the current OS."""
+    """Install SysHealth as a background service for the current OS."""
     sys_name = platform.system()
 
     if sys_name == "Windows":
@@ -267,14 +267,14 @@ def install_service():
     service_exists = False
     if sys_name == "Windows":
         # sc query returns 0 if service exists, 1060 if it does not exist
-        result = subprocess.run(["sc", "query", "PyMonitor"], capture_output=True)
+        result = subprocess.run(["sc", "query", "SysHealth"], capture_output=True)
         service_exists = result.returncode == 0
     elif sys_name == "Linux":
-        target_service = Path("/etc/systemd/system/pymonitor.service")
+        target_service = Path("/etc/systemd/system/syshealth.service")
         service_exists = target_service.exists()
 
     if service_exists:
-        console.print("[yellow]PyMonitor service is already installed on this system.[/yellow]")
+        console.print("[yellow]SysHealth service is already installed on this system.[/yellow]")
         delete_it = confirm("Do you want to stop and delete the current service to install the new one?")
         if not delete_it:
             console.print("[red]Aborting installation.[/red]")
@@ -284,12 +284,12 @@ def install_service():
             t = prog.add_task("[cyan]Stopping and removing existing service...", total=None)
             try:
                 if sys_name == "Windows":
-                    subprocess.run(["sc", "stop", "PyMonitor"], capture_output=True)
+                    subprocess.run(["sc", "stop", "SysHealth"], capture_output=True)
                     time.sleep(2)  # Give it time to stop
-                    subprocess.run(["sc", "delete", "PyMonitor"], capture_output=True)
+                    subprocess.run(["sc", "delete", "SysHealth"], capture_output=True)
                 elif sys_name == "Linux":
-                    subprocess.run(["systemctl", "stop", "pymonitor.service"], capture_output=True)
-                    subprocess.run(["systemctl", "disable", "pymonitor.service"], capture_output=True)
+                    subprocess.run(["systemctl", "stop", "syshealth.service"], capture_output=True)
+                    subprocess.run(["systemctl", "disable", "syshealth.service"], capture_output=True)
                     if target_service.exists():
                         target_service.unlink()
                     subprocess.run(["systemctl", "daemon-reload"], capture_output=True)
@@ -303,11 +303,11 @@ def install_service():
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        task = progress.add_task(f"[cyan]Installing PyMonitor background service for {sys_name}...", total=None)
+        task = progress.add_task(f"[cyan]Installing SysHealth background service for {sys_name}...", total=None)
 
         try:
             if sys_name == "Windows":
-                windows_script = repo_root / "scripts" / "windows" / "pymonitor_windows_service.py"
+                windows_script = repo_root / "scripts" / "windows" / "syshealth_windows_service.py"
                 if not windows_script.exists():
                     raise FileNotFoundError(f"Service script not found at {windows_script}")
 
@@ -319,15 +319,15 @@ def install_service():
                     text=True,
                 )
             elif sys_name == "Linux":
-                linux_script = repo_root / "scripts" / "linux" / "pymonitor.service"
+                linux_script = repo_root / "scripts" / "linux" / "syshealth.service"
                 if not linux_script.exists():
                     raise FileNotFoundError(f"Service unit file not found at {linux_script}")
 
-                target_service = Path("/etc/systemd/system/pymonitor.service")
+                target_service = Path("/etc/systemd/system/syshealth.service")
                 shutil.copy(linux_script, target_service)
 
                 subprocess.run(["systemctl", "daemon-reload"], check=True, capture_output=True)
-                subprocess.run(["systemctl", "enable", "pymonitor.service"], check=True, capture_output=True)
+                subprocess.run(["systemctl", "enable", "syshealth.service"], check=True, capture_output=True)
 
             progress.update(task, description=f"[bold green]✔ Successfully installed {sys_name} service![/bold green]")
         except Exception as e:
@@ -338,19 +338,19 @@ def install_service():
         task = prog.add_task("[cyan]Starting service...", total=None)
         try:
             if sys_name == "Windows":
-                subprocess.run(["sc", "start", "PyMonitor"], check=True, capture_output=True)
+                subprocess.run(["sc", "start", "SysHealth"], check=True, capture_output=True)
             elif sys_name == "Linux":
-                subprocess.run(["systemctl", "start", "pymonitor"], check=True, capture_output=True)
+                subprocess.run(["systemctl", "start", "syshealth"], check=True, capture_output=True)
 
             time.sleep(1)  # Give it a moment to start
 
             # Verify it's running
             is_running = False
             if sys_name == "Windows":
-                res = subprocess.run(["sc", "query", "PyMonitor"], capture_output=True, text=True)
+                res = subprocess.run(["sc", "query", "SysHealth"], capture_output=True, text=True)
                 is_running = "RUNNING" in res.stdout
             elif sys_name == "Linux":
-                res = subprocess.run(["systemctl", "is-active", "pymonitor"], capture_output=True, text=True)
+                res = subprocess.run(["systemctl", "is-active", "syshealth"], capture_output=True, text=True)
                 is_running = res.stdout.strip() == "active"
 
             if is_running:

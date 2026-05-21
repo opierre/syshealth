@@ -3,7 +3,7 @@ requires = ["maturin>=1.12.6, <2.0"]
 build-backend = "maturin"
 
 [project]
-name = "pymonitor"
+name = "syshealth"
 version = "0.0.1"
 description = "A lightweight computer constants monitor using Rust and Python"
 readme = "README.md"
@@ -28,12 +28,12 @@ dependencies = [
 ]
 
 [project.scripts]
-pymonitor = "pymonitor.cli:app"
+syshealth = "syshealth.cli:app"
 
 [tool.maturin]
 features = ["pyo3/extension-module"]
 python-source = "python"
-module-name = "pymonitor._rust_monitor"
+module-name = "syshealth._rust_monitor"
 
 [dependency-groups]
 mqtt = ["paho-mqtt>=2.1.0"]
@@ -65,5 +65,5 @@ convention = "google"
 ]
 
 [tool.pytest.ini_options]
-addopts = "--cov=pymonitor --cov-report term:skip-covered --cov-report html:htmlcov --cov-report xml:coverage.xml"
+addopts = "--cov=syshealth --cov-report term:skip-covered --cov-report html:htmlcov --cov-report xml:coverage.xml"
 testpaths = ["tests"]

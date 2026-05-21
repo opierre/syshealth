@@ -38,7 +38,7 @@ impl MqttExporter {
 
         let (tx, rx) = mpsc::channel::<String>();
 
-        let mut mqttoptions = MqttOptions::new("pymonitor", host, port);
+        let mut mqttoptions = MqttOptions::new("syshealth", host, port);
         mqttoptions.set_keep_alive(Duration::from_secs(5));
 
         let (client, mut connection) = Client::new(mqttoptions, 64);
@@ -62,7 +62,7 @@ impl MqttExporter {
         // published without blocking the metric-gathering thread.
         thread::spawn(move || {
             while let Ok(msg) = rx.recv() {
-                if let Err(e) = client.publish("pymonitor/metrics", QoS::AtMostOnce, false, msg.into_bytes()) {
+                if let Err(e) = client.publish("syshealth/metrics", QoS::AtMostOnce, false, msg.into_bytes()) {
                     let mut errs = publish_errors.lock().unwrap();
                     if errs.len() < 100 {
                         errs.push(format!("MQTT publish error: {}", e));
