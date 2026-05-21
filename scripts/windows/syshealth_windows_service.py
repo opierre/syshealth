@@ -15,10 +15,10 @@
 
 import sys
 
-import servicemanager   # ty: ignore[unresolved-import]
-import win32event       # ty: ignore[unresolved-import]
-import win32service     # ty: ignore[unresolved-import]
-import win32serviceutil # ty: ignore[unresolved-import]
+import servicemanager  # ty: ignore[unresolved-import]
+import win32event  # ty: ignore[unresolved-import]
+import win32service  # ty: ignore[unresolved-import]
+import win32serviceutil  # ty: ignore[unresolved-import]
 from syshealth.monitor import ExporterType, SysHealth
 
 
@@ -34,11 +34,11 @@ class SysHealthService(win32serviceutil.ServiceFramework):
         win32serviceutil.ServiceFramework.__init__(self, args)
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
         self.monitor = SysHealth()
-        
+
         self.refresh_rate = 5
         self.priority = 5
         self.exporter = "victoriametrics"
-        
+
         # Parse arguments passed from Service Control Manager
         # args[0] is service name
         if len(args) > 1:
@@ -62,9 +62,9 @@ class SysHealthService(win32serviceutil.ServiceFramework):
     def SvcDoRun(self):
         """Service Run Request."""
         servicemanager.LogMsg(
-            servicemanager.EVENTLOG_INFORMATION_TYPE, 
-            servicemanager.PYS_SERVICE_STARTED, 
-            (self._svc_name_, f"Refresh: {self.refresh_rate}s, Priority: {self.priority}, Exporter: {self.exporter}")
+            servicemanager.EVENTLOG_INFORMATION_TYPE,
+            servicemanager.PYS_SERVICE_STARTED,
+            (self._svc_name_, f"Refresh: {self.refresh_rate}s, Priority: {self.priority}, Exporter: {self.exporter}"),
         )
         self.main()
 
@@ -75,11 +75,7 @@ class SysHealthService(win32serviceutil.ServiceFramework):
         except ValueError:
             exporter_enum = ExporterType.VICTORIAMETRICS
 
-        self.monitor.start(
-            refresh_rate=self.refresh_rate, 
-            exporter_type=exporter_enum, 
-            priority=self.priority
-        )
+        self.monitor.start(refresh_rate=self.refresh_rate, exporter_type=exporter_enum, priority=self.priority)
         # Block indefinitely until stop event is received (0 CPU usage)
         win32event.WaitForSingleObject(self.hWaitStop, win32event.INFINITE)
         self.monitor.stop()
