@@ -64,6 +64,22 @@ jobs:
       - name: Run Pytest
         run: uv run pytest --cov-fail-under=80
         
+      - name: Generate Workflow Summary
+        if: always()
+        run: |
+          echo "## 🚀 CI/CD Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🛠️ Tools & Versions" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Tool | Version |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Setup | **Python** | \`$(python --version | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Setup | **Rust** | \`$(rustc --version | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Setup | **uv** | \`$(uv --version | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | **Ruff** | \`$(uv run ruff --version 2>/dev/null | awk '{print $2}' || echo 'Unknown')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Type Check | **Ty** | \`$(uv run ty --version 2>/dev/null | awk '{print $2}' || echo 'Unknown')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | **Pytest** | \`$(uv run pytest --version 2>&1 | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
       - name: Generate Coverage Summary
         if: always()
         run: uv run coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
@@ -81,16 +97,26 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version-file: "pyproject.toml"
-          
+
       - name: Rust Security Check
         uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Python Security Check
-        uses: pypa/gh-action-pip-audit@v1.1.0
-        with:
-          inputs: .
+        run: |
+          uv audit
+
+      - name: Generate Security Summary
+        if: always()
+        run: |
+          echo "## 🛡️ Security Checks Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Tool | Version |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **cargo-audit** | \`$(cargo audit --version | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **pip-audit** | \`$(uvx --quiet pip-audit --version | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
   build-wheels:
     name: Build wheels on ${{ matrix.os }}
