@@ -239,7 +239,7 @@ def global_metrics():
 
 
 @app.command()
-def install_service():
+def install_service():  # pragma: no cover
     """Install SysHealth as a background service for the current OS."""
     sys_name = platform.system()
 

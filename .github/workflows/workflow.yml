@@ -62,7 +62,11 @@ jobs:
         run: uv run ty check .
         
       - name: Run Pytest
-        run: uv run pytest
+        run: uv run pytest --cov-fail-under=80
+        
+      - name: Generate Coverage Summary
+        if: always()
+        run: uv run coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
 
   security:
     name: Security Checks
@@ -84,13 +88,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           
       - name: Python Security Check
-        run: |
-          uv pip install --system pip-audit
-          uv export --format requirements-txt --all-groups -o requirements.txt
-      - uses: pypa/gh-action-pip-audit@v1.1.0
+        uses: pypa/gh-action-pip-audit@v1.1.0
         with:
-          inputs: requirements.txt
-          no-deps: true
+          inputs: .
 
   build-wheels:
     name: Build wheels on ${{ matrix.os }}
