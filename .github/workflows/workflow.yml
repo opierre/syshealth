@@ -79,7 +79,7 @@ jobs:
           python-version-file: "pyproject.toml"
           
       - name: Rust Security Check
-        uses: rustsec/audit-check@v2
+        uses: rustsec/audit-check@v2.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           
@@ -89,6 +89,7 @@ jobs:
           uv export --format requirements-txt --all-groups -o requirements.txt
       - uses: pypa/gh-action-pip-audit@v1.1.0
         with:
+          inputs: requirements.txt
           no-deps: true
 
   build-wheels:
