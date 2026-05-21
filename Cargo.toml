@@ -8,11 +8,11 @@ name = "_rust_monitor"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-pyo3-stub-gen = "0.21.0"
+pyo3-stub-gen = "0.22.3"
 pyo3 = { version = "0.28.2", features = ["extension-module"] }
 sysinfo = "0.38.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-rumqttc = "0.24.0"
+rumqttc = { version = "0.25.1", default-features = false, features = ["use-native-tls"] }
 ureq = "3.2.0"
 thread-priority = "1.1.0"

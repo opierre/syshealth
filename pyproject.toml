@@ -54,6 +54,7 @@ select = ["E", "F", "S", "D", "I", "RUF"]
 
 [tool.ruff]
 line-length = 120
+exclude = ["tests", "**/*.pyi"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -67,3 +68,6 @@ convention = "google"
 [tool.pytest.ini_options]
 addopts = "--cov=syshealth --cov-report term:skip-covered --cov-report html:htmlcov --cov-report xml:coverage.xml"
 testpaths = ["tests"]
+
+[tool.ty.src]
+exclude = ["tests", "**/*.pyi"]

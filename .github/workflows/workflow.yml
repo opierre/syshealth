@@ -16,7 +16,7 @@ jobs:
       version: ${{ steps.get_version.outputs.version }}
       is_new: ${{ steps.check_tag.outputs.is_new }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Get version
@@ -37,15 +37,15 @@ jobs:
     name: Lint, Type Check & Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
         with:
           enable-cache: true
           
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version-file: "pyproject.toml"
           
@@ -56,10 +56,10 @@ jobs:
         run: uv sync --all-groups
         
       - name: Run Ruff (Lint)
-        run: uv run ruff check .
+        uses: astral-sh/ruff-action@v4
         
       - name: Run Ty (Type check)
-        run: uv run ty .
+        run: uv run ty check .
         
       - name: Run Pytest
         run: uv run pytest
@@ -68,13 +68,13 @@ jobs:
     name: Security Checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
         
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version-file: "pyproject.toml"
           
@@ -97,7 +97,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Build wheels
         uses: PyO3/maturin-action@v1
@@ -106,7 +106,7 @@ jobs:
           args: --release --out dist
           
       - name: Upload wheels
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: wheels-${{ matrix.os }}
           path: dist
@@ -116,7 +116,7 @@ jobs:
     needs: [lint-and-test, security]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Build sdist
         uses: PyO3/maturin-action@v1
@@ -125,7 +125,7 @@ jobs:
           args: --out dist
           
       - name: Upload sdist
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sdist
           path: dist
@@ -141,7 +141,7 @@ jobs:
       contents: read
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: '*'
           merge-multiple: true
@@ -158,7 +158,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       
       - name: Create Tag
         run: |
@@ -168,14 +168,14 @@ jobs:
           git push origin "v${{ needs.check-version.outputs.version }}"
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: '*'
           merge-multiple: true
           path: dist
           
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: "v${{ needs.check-version.outputs.version }}"
           files: dist/*
