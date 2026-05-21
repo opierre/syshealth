@@ -75,7 +75,11 @@ class MonitorHandle:
     r"""
     Holds the shared state to allow Python to stop the Rust background thread.
     """
-    ...
+    def stop(self) -> None:
+        r"""
+        Signals the background thread to safely terminate.
+        """
+    def get_errors(self) -> builtins.list[builtins.str]: ...
 
 def get_global_metrics() -> GlobalMetricsSnapshot:
     r"""

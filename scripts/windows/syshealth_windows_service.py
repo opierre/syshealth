@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Windows service configuration."""
 
 import sys
 
-import servicemanager
-import win32event
-import win32service
-import win32serviceutil
+import servicemanager   # ty: ignore[unresolved-import]
+import win32event       # ty: ignore[unresolved-import]
+import win32service     # ty: ignore[unresolved-import]
+import win32serviceutil # ty: ignore[unresolved-import]
 from syshealth.monitor import ExporterType, SysHealth
 
 

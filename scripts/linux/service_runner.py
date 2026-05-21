@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Service runner."""
 
 import argparse
 import signal
@@ -20,6 +21,7 @@ from syshealth.monitor import SysHealth
 
 
 def main():
+    """Main entrypoint."""
     parser = argparse.ArgumentParser(description="SysHealth background service runner")
     parser.add_argument("--refresh-rate", type=int, default=5, help="Refresh rate in seconds")
     parser.add_argument("--priority", type=int, default=5, help="Thread priority (0-5)")

@@ -15,7 +15,7 @@
 use pyo3::prelude::*;
 use sysinfo::{ProcessesToUpdate, System};
 use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
-use pyo3_stub_gen::{define_stub_info_gatherer, derive::{gen_stub_pyclass, gen_stub_pyfunction}};
+use pyo3_stub_gen::{define_stub_info_gatherer, derive::{gen_stub_pyclass, gen_stub_pyfunction, gen_stub_pymethods}};
 use serde::Serialize;
 
 mod exporter;
@@ -28,6 +28,7 @@ pub struct MonitorHandle {
     errors: Arc<std::sync::Mutex<Vec<String>>>,
 }
 
+#[gen_stub_pymethods]
 #[pymethods]
 impl MonitorHandle {
     /// Signals the background thread to safely terminate.

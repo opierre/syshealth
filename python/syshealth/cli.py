@@ -96,20 +96,20 @@ def get_gpu_name() -> str:
         if platform.system() == "Windows":
             creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
             result = subprocess.check_output(
-                ["wmic", "path", "win32_VideoController", "get", "name"], text=True, creationflags=creation_flags
+                ["wmic", "path", "win32_VideoController", "get", "name"], text=True, creationflags=creation_flags  # noqa: S607
             )
             lines = [line.strip() for line in result.split("\n") if line.strip()]
             if len(lines) > 1:
                 return lines[1]
         elif platform.system() == "Linux":
-            result = subprocess.check_output(["lspci"], text=True)
+            result = subprocess.check_output(["lspci"], text=True)  # noqa: S607
             for line in result.split("\n"):
                 if "VGA compatible controller" in line or "3D controller" in line:
                     parts = line.split(": ", 1)
                     if len(parts) > 1:
                         return parts[1].strip()
     except Exception:
-        pass
+        print("No GPU name retrieved.")
     return "Unknown"
 
 
@@ -251,7 +251,7 @@ def install_service():
         except Exception:
             is_admin = False
     elif sys_name == "Linux":
-        is_admin = os.getuid() == 0
+        is_admin = os.getuid() == 0  # ty:ignore[unresolved-attribute]
     else:
         console.print(f"[bold red]Unsupported OS for service installation: {sys_name}[/bold red]")
         return
@@ -267,7 +267,7 @@ def install_service():
     service_exists = False
     if sys_name == "Windows":
         # sc query returns 0 if service exists, 1060 if it does not exist
-        result = subprocess.run(["sc", "query", "SysHealth"], capture_output=True)
+        result = subprocess.run(["sc", "query", "SysHealth"], capture_output=True)  # noqa: S607
         service_exists = result.returncode == 0
     elif sys_name == "Linux":
         target_service = Path("/etc/systemd/system/syshealth.service")
@@ -284,15 +284,15 @@ def install_service():
             t = prog.add_task("[cyan]Stopping and removing existing service...", total=None)
             try:
                 if sys_name == "Windows":
-                    subprocess.run(["sc", "stop", "SysHealth"], capture_output=True)
+                    subprocess.run(["sc", "stop", "SysHealth"], capture_output=True)  # noqa: S607
                     time.sleep(2)  # Give it time to stop
-                    subprocess.run(["sc", "delete", "SysHealth"], capture_output=True)
+                    subprocess.run(["sc", "delete", "SysHealth"], capture_output=True)  # noqa: S607
                 elif sys_name == "Linux":
-                    subprocess.run(["systemctl", "stop", "syshealth.service"], capture_output=True)
-                    subprocess.run(["systemctl", "disable", "syshealth.service"], capture_output=True)
+                    subprocess.run(["systemctl", "stop", "syshealth.service"], capture_output=True)  # noqa: S607
+                    subprocess.run(["systemctl", "disable", "syshealth.service"], capture_output=True)  # noqa: S607
                     if target_service.exists():
                         target_service.unlink()
-                    subprocess.run(["systemctl", "daemon-reload"], capture_output=True)
+                    subprocess.run(["systemctl", "daemon-reload"], capture_output=True)  # noqa: S607
                 prog.update(t, description="[bold green]✔ Existing service removed![/bold green]")
             except Exception as e:
                 prog.update(t, description=f"[bold red] ❌ Failed to remove existing service: {e}[/bold red]")
@@ -312,7 +312,7 @@ def install_service():
                     raise FileNotFoundError(f"Service script not found at {windows_script}")
 
                 # Install service using pywin32
-                subprocess.run(
+                subprocess.run(  # noqa: S603
                     [sys.executable, str(windows_script), "--startup", "auto", "install"],
                     check=True,
                     capture_output=True,
@@ -326,8 +326,8 @@ def install_service():
                 target_service = Path("/etc/systemd/system/syshealth.service")
                 shutil.copy(linux_script, target_service)
 
-                subprocess.run(["systemctl", "daemon-reload"], check=True, capture_output=True)
-                subprocess.run(["systemctl", "enable", "syshealth.service"], check=True, capture_output=True)
+                subprocess.run(["systemctl", "daemon-reload"], check=True, capture_output=True)  # noqa: S607
+                subprocess.run(["systemctl", "enable", "syshealth.service"], check=True, capture_output=True)  # noqa: S607
 
             progress.update(task, description=f"[bold green]✔ Successfully installed {sys_name} service![/bold green]")
         except Exception as e:
@@ -338,19 +338,19 @@ def install_service():
         task = prog.add_task("[cyan]Starting service...", total=None)
         try:
             if sys_name == "Windows":
-                subprocess.run(["sc", "start", "SysHealth"], check=True, capture_output=True)
+                subprocess.run(["sc", "start", "SysHealth"], check=True, capture_output=True)  # noqa: S607
             elif sys_name == "Linux":
-                subprocess.run(["systemctl", "start", "syshealth"], check=True, capture_output=True)
+                subprocess.run(["systemctl", "start", "syshealth"], check=True, capture_output=True)  # noqa: S607
 
             time.sleep(1)  # Give it a moment to start
 
             # Verify it's running
             is_running = False
             if sys_name == "Windows":
-                res = subprocess.run(["sc", "query", "SysHealth"], capture_output=True, text=True)
+                res = subprocess.run(["sc", "query", "SysHealth"], capture_output=True, text=True)  # noqa: S607
                 is_running = "RUNNING" in res.stdout
             elif sys_name == "Linux":
-                res = subprocess.run(["systemctl", "is-active", "syshealth"], capture_output=True, text=True)
+                res = subprocess.run(["systemctl", "is-active", "syshealth"], capture_output=True, text=True)  # noqa: S607
                 is_running = res.stdout.strip() == "active"
 
             if is_running:

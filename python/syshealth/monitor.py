@@ -96,7 +96,8 @@ class SysHealth:
                 * if no endpoint has been found for selected exporter type.
                 * if priority is not in range(6).
             ImportError: if paho-mqtt has not been installed and exporter_type == ExporterType.MQTT.
-            ConnectionError: if VictoriaMetrics database is not reachable and exporter_type == ExporterType.VICTORIAMETRICS.
+            ConnectionError: if VictoriaMetrics database is not reachable and exporter_type ==
+                            ExporterType.VICTORIAMETRICS.
         """
         if self._monitor_handle is not None:
             raise RuntimeError("Monitor is already running.")
@@ -134,7 +135,7 @@ class SysHealth:
             try:
                 parsed_url = urlparse(endpoint)
                 health_url = f"{parsed_url.scheme}://{parsed_url.netloc}/health"
-                urllib.request.urlopen(health_url, timeout=5)
+                urllib.request.urlopen(health_url, timeout=5)  # noqa: S310
             except Exception as exc:
                 raise ConnectionError(
                     f"Failed to connect to VictoriaMetrics at {endpoint}. Ensure the VictoriaMetrics database "
