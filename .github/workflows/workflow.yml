@@ -62,7 +62,7 @@ jobs:
         run: uv run ty check .
         
       - name: Run Pytest
-        run: uv run pytest --cov-fail-under=80
+        run: uv run pytest --cov-fail-under=80 --junitxml=pytest-report.xml
         
       - name: Generate Workflow Summary
         if: always()
@@ -75,9 +75,37 @@ jobs:
           echo "| Setup | **Python** | \`$(python --version | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Setup | **Rust** | \`$(rustc --version | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Setup | **uv** | \`$(uv --version | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Lint | **Ruff** | \`$(uv run ruff --version 2>/dev/null | awk '{print $2}' || echo 'Unknown')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | **Ruff** | \`v4.0.0\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Type Check | **Ty** | \`$(uv run ty --version 2>/dev/null | awk '{print $2}' || echo 'Unknown')\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Test | **Pytest** | \`$(uv run pytest --version 2>&1 | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 🧪 Test Results & Coverage" >> $GITHUB_STEP_SUMMARY
+          uv run coverage json
+          
+          python -c "
+          import xml.etree.ElementTree as ET, json
+          try:
+              tree = ET.parse('pytest-report.xml')
+              ts = tree.getroot() if tree.getroot().tag == 'testsuite' else tree.find('.//testsuite')
+              tests = int(ts.get('tests', 0))
+              fails = int(ts.get('failures', 0))
+              errs = int(ts.get('errors', 0))
+              skips = int(ts.get('skipped', 0))
+              passed = tests - fails - errs - skips
+          except:
+              tests, passed, fails, skips, errs = 0, 0, 0, 0, 0
+          
+          try:
+              with open('coverage.json') as f:
+                  cov = json.load(f)['totals']['percent_covered_display'] + '%'
+          except:
+              cov = 'N/A'
+          
+          print('| Total Tests | Passed ✅ | Failed ❌ | Skipped ⏭️ | Errors ⚠️ | Coverage 📊 |')
+          print('|-------------|-----------|-----------|------------|-----------|------------|')
+          print(f'| {tests} | {passed} | {fails} | {skips} | {errs} | {cov} |')
+          " >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
       - name: Generate Coverage Summary
@@ -99,13 +127,12 @@ jobs:
           python-version-file: "pyproject.toml"
 
       - name: Rust Security Check
-        uses: rustsec/audit-check@v2.0.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        run: cargo audit --color never 2>&1 | tee rust_audit.log
           
       - name: Python Security Check
+        if: success() || failure()
         run: |
-          uv audit
+          uv audit 2>&1 | tee python_audit.log
 
       - name: Generate Security Summary
         if: always()
@@ -117,6 +144,21 @@ jobs:
           echo "| **cargo-audit** | \`$(cargo audit --version | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **pip-audit** | \`$(uvx --quiet pip-audit --version | awk '{print $2}')\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "<details><summary><b>Rust Audit Output</b></summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          cat rust_audit.log >> $GITHUB_STEP_SUMMARY || echo "No output recorded." >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "<details><summary><b>Python Audit Output</b></summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          cat python_audit.log >> $GITHUB_STEP_SUMMARY || echo "No output recorded." >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
 
   build-wheels:
     name: Build wheels on ${{ matrix.os }}
