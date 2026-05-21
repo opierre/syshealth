@@ -127,12 +127,16 @@ jobs:
           python-version-file: "pyproject.toml"
 
       - name: Rust Security Check
-        run: cargo audit --color never 2>&1 | tee rust_audit.log
+        run: |
+          cargo install cargo-audit
+          cargo audit --color never 2>&1 | tee rust_audit.log
+          exit ${PIPESTATUS[0]}
           
       - name: Python Security Check
         if: success() || failure()
         run: |
-          uv audit 2>&1 | tee python_audit.log
+          uv audit --color never 2>&1 | tee python_audit.log
+          exit ${PIPESTATUS[0]}
 
       - name: Generate Security Summary
         if: always()
