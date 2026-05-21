@@ -1,5 +1,8 @@
 # 🖥️🩺 SysHealth
 
+[![PyPI version](https://img.shields.io/pypi/v/syshealth.svg?color=blue)](https://pypi.org/project/syshealth/)
+[![CI Pipeline](https://github.com/opierre/syshealth/actions/workflows/workflow.yml/badge.svg)](https://github.com/opierre/syshealth/actions)
+
 > A highly optimized, cross-platform system resource monitor with a Rust core and a beautiful Python CLI.
 
 SysHealth pushes the performance-critical work (polling loops, hardware inspection, network sampling) into compiled **Rust** code via [PyO3](https://pyo3.rs/), while keeping the Python surface clean, ergonomic, and easy to extend.
@@ -18,36 +21,100 @@ SysHealth pushes the performance-critical work (polling loops, hardware inspecti
 
 ---
 
-## 🚀 Quickstart
+## 🚀 Installation
 
-### Prerequisites
-
-| Tool | Purpose |
-|------|---------|
-| [`rustup`](https://rustup.rs/) | Rust compiler toolchain |
-| [`uv`](https://docs.astral.sh/uv/) | Python project & venv manager |
-
-### Install & Build
+Install SysHealth directly from PyPI using [`uv`](https://docs.astral.sh/uv/) (recommended) or standard pip:
 
 ```bash
-# 1. Create virtual environment and compile the Rust extension in one step
-uv pip install -e .
+# Install system-wide or in your active environment
+uv tool install syshealth
 
-# 2. (Optional) install dev dependencies for tests and linting
-uv pip install -e ".[dev]"
+# OR using standard pip
+pip install syshealth
 ```
 
-`uv` detects `maturin` as the build backend in `pyproject.toml`, compiles `src/lib.rs`, and links the resulting shared library into your local Python environment automatically.
+*(Optional: If you plan to use the MQTT exporter, install with the `mqtt` extra: `uv tool install syshealth[mqtt]`)*
 
-### Start Dependencies
+---
 
-If you plan to use the background exporter for **MQTT** or **VictoriaMetrics**, ensure these services are running. You can quickly start them using `docker-compose` or `podman-compose` with the provided file (*it uses a persistent volume for VictoriaMetrics locally, which seamlessly acts as an ephemeral volume in CI*):
+## 📖 Usage
+
+### CLI Dashboard (`global-metrics`)
+
+Displays a full system snapshot dashboard. Panels are automatically placed side-by-side when the terminal is wide enough.
 
 ```bash
-docker-compose up -d
-# OR with podman
-podman-compose up -d
+syshealth global-metrics
 ```
+
+![global-metrics demo](docs/global-metrics.gif)
+
+**Output panels:**
+
+| Panel | Metric | Backend |
+|-------|--------|---------|
+| 🖥️ System Information | OS name & version | 🦀 Rust (`sysinfo`) |
+| 🖥️ System Information | Kernel version | 🦀 Rust (`sysinfo`) |
+| 🖥️ System Information | Hostname | 🦀 Rust (`sysinfo`) |
+| 🖥️ System Information | CPU brand, cores & threads | 🦀 Rust (`sysinfo`) |
+| 🖥️ System Information | GPU name | 🐍 Python (`wmic` / `lspci` subprocess) |
+| 🖥️ System Information | Total RAM | 🦀 Rust (`sysinfo`) |
+| 🖥️ System Information | Available disk space & % | 🦀 Rust (`sysinfo`) |
+| 🖥️ System Information | Boot time & uptime | 🦀 Rust (`sysinfo`) |
+| 👥 System Users | Real OS user accounts | 🦀 Rust (`sysinfo`) |
+| 👥 System Users | Admin rights detection | 🐍 Python (group name filtering) |
+| ⚡ System Instant Metrics | CPU usage % | 🦀 Rust (`sysinfo`) |
+| ⚡ System Instant Metrics | CPU temperature | 🦀 Rust (`sysinfo` components) |
+| ⚡ System Instant Metrics | Per-core CPU usage | 🦀 Rust (`sysinfo`) |
+| ⚡ System Instant Metrics | Load average (1m / 5m / 15m) | 🦀 Rust (`sysinfo`) |
+| ⚡ System Instant Metrics | RAM usage % | 🦀 Rust (`sysinfo`) |
+| ⚡ System Instant Metrics | Swap usage % | 🦀 Rust (`sysinfo`) |
+| 🏆 Top CPU Consumers | Top 4 processes by CPU | 🦀 Rust (`sysinfo`) |
+| 🌐 Network Instant Metrics | Interface names | 🦀 Rust (`sysinfo`) |
+| 🌐 Network Instant Metrics | Local IPv4 address | 🦀 Rust (`sysinfo`) |
+| 🌐 Network Instant Metrics | Rx / Tx speed (MB/s) | 🦀 Rust (`sysinfo`) |
+
+---
+
+### Process Monitor (`process`)
+
+Monitors all running instances of a named process and shows per-PID resource usage, sorted by CPU consumption.
+
+```bash
+syshealth process --name python
+# or short form:
+syshealth process -n chrome.exe
+```
+
+![process demo](docs/process.gif)
+
+**Output table:**
+
+| Column | Metric | Backend |
+|--------|--------|---------|
+| PID | Process identifier | 🦀 Rust (`sysinfo`) |
+| CPU Usage (%) | Per-process CPU % | 🦀 Rust (`sysinfo`) |
+| RAM Usage (%) | Per-process RAM % of total | 🦀 Rust (`sysinfo`) |
+
+> [!NOTE]
+> Rows are sorted **descending by CPU usage**. If multiple instances of the same process are running (e.g. browser tabs), you will see one row per PID.
+
+---
+
+### Background Service (`install-service`)
+
+Installs SysHealth as a background service for the current OS (Windows or Linux). Requires Administrator or root privileges.
+
+```bash
+# Windows: open terminal as Administrator
+# Linux: run with sudo
+syshealth install-service
+```
+
+> [!NOTE]
+> If the service is already installed, you will be prompted to stop and replace it.
+
+---
 
 ### Background Exporter (Python API)
 
@@ -74,7 +141,36 @@ with SysHealth() as monitor:
 
 ---
 
-## 🛠️ Development Workflow
+## 🛠️ Development
+
+### Prerequisites
+
+| Tool | Purpose |
+|------|---------|
+| [`rustup`](https://rustup.rs/) | Rust compiler toolchain |
+| [`uv`](https://docs.astral.sh/uv/) | Python project & venv manager |
+
+### Install & Build from Source
+
+```bash
+# 1. Create virtual environment and compile the Rust extension in one step
+uv pip install -e .
+
+# 2. (Optional) install dev dependencies for tests and linting
+uv pip install -e ".[dev]"
+```
+
+`uv` detects `maturin` as the build backend in `pyproject.toml`, compiles `src/lib.rs`, and links the resulting shared library into your local Python environment automatically.
+
+### Start External Dependencies
+
+If you plan to use the background exporter for **MQTT** or **VictoriaMetrics**, ensure these services are running. You can quickly start them using `docker-compose` or `podman-compose` with the provided file:
+
+```bash
+docker-compose up -d
+# OR with podman
+podman-compose up -d
+```
 
 ### Run Tests & Linting
 
@@ -153,85 +249,6 @@ mock_metrics.my_new_metric = 42.0
 
 > [!NOTE]
 > If you need a metric that `sysinfo` does not provide (e.g. GPU name), implement it as a plain Python helper function in `cli.py` using `subprocess` or the `platform` module — see `get_gpu_name()` for an example.
-
----
-
-## 📟 CLI Commands
-
-### `global-metrics`
-
-Displays a full system snapshot dashboard. Panels are automatically placed side-by-side when the terminal is wide enough.
-
-```bash
-uv run syshealth global-metrics
-```
-
-![global-metrics demo](docs/global-metrics.gif)
-
-**Output panels:**
-
-| Panel | Metric | Backend |
-|-------|--------|---------|
-| 🖥️ System Information | OS name & version | 🦀 Rust (`sysinfo`) |
-| 🖥️ System Information | Kernel version | 🦀 Rust (`sysinfo`) |
-| 🖥️ System Information | Hostname | 🦀 Rust (`sysinfo`) |
-| 🖥️ System Information | CPU brand, cores & threads | 🦀 Rust (`sysinfo`) |
-| 🖥️ System Information | GPU name | 🐍 Python (`wmic` / `lspci` subprocess) |
-| 🖥️ System Information | Total RAM | 🦀 Rust (`sysinfo`) |
-| 🖥️ System Information | Available disk space & % | 🦀 Rust (`sysinfo`) |
-| 🖥️ System Information | Boot time & uptime | 🦀 Rust (`sysinfo`) |
-| 👥 System Users | Real OS user accounts | 🦀 Rust (`sysinfo`) |
-| 👥 System Users | Admin rights detection | 🐍 Python (group name filtering) |
-| ⚡ System Instant Metrics | CPU usage % | 🦀 Rust (`sysinfo`) |
-| ⚡ System Instant Metrics | CPU temperature | 🦀 Rust (`sysinfo` components) |
-| ⚡ System Instant Metrics | Per-core CPU usage | 🦀 Rust (`sysinfo`) |
-| ⚡ System Instant Metrics | Load average (1m / 5m / 15m) | 🦀 Rust (`sysinfo`) |
-| ⚡ System Instant Metrics | RAM usage % | 🦀 Rust (`sysinfo`) |
-| ⚡ System Instant Metrics | Swap usage % | 🦀 Rust (`sysinfo`) |
-| 🏆 Top CPU Consumers | Top 4 processes by CPU | 🦀 Rust (`sysinfo`) |
-| 🌐 Network Instant Metrics | Interface names | 🦀 Rust (`sysinfo`) |
-| 🌐 Network Instant Metrics | Local IPv4 address | 🦀 Rust (`sysinfo`) |
-| 🌐 Network Instant Metrics | Rx / Tx speed (MB/s) | 🦀 Rust (`sysinfo`) |
-
----
-
-### `process`
-
-Monitors all running instances of a named process and shows per-PID resource usage, sorted by CPU consumption.
-
-```bash
-uv run syshealth process --name python
-# or short form:
-uv run syshealth process -n chrome.exe
-```
-
-![process demo](docs/process.gif)
-
-**Output table:**
-
-| Column | Metric | Backend |
-|--------|--------|---------|
-| PID | Process identifier | 🦀 Rust (`sysinfo`) |
-| CPU Usage (%) | Per-process CPU % | 🦀 Rust (`sysinfo`) |
-| RAM Usage (%) | Per-process RAM % of total | 🦀 Rust (`sysinfo`) |
-
-> [!NOTE]
-> Rows are sorted **descending by CPU usage**. If multiple instances of the same process are running (e.g. browser tabs), you will see one row per PID.
-
----
-
-### `install-service`
-
-Installs SysHealth as a background service for the current OS (Windows or Linux). Requires Administrator or root privileges.
-
-```bash
-# Windows: open terminal as Administrator
-# Linux: run with sudo
-uv run syshealth install-service
-```
-
-> [!NOTE]
-> If the service is already installed, you will be prompted to stop and replace it.
 
 ---
 
