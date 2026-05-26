@@ -47,7 +47,7 @@ Displays a full system snapshot dashboard. Panels are automatically placed side-
 syshealth global-metrics
 ```
 
-![global-metrics demo](docs/global-metrics.gif)
+![global-metrics demo](resources/screenshot_global_metrics.png)
 
 **Output panels:**
 
@@ -86,7 +86,7 @@ syshealth process --name python
 syshealth process -n chrome.exe
 ```
 
-![process demo](docs/process.gif)
+![process demo](resources/screenshot_process.png)
 
 **Output table:**
 
@@ -256,7 +256,7 @@ mock_metrics.my_new_metric = 42.0
 
 ```
 syshealth/
-├── src/
+├── scripts/
 │   └── linux/
 │       ├── syshealth.service               # systemd service configuration
 │       └── service_runner.py               # 🐍 Main program to run with systemd
