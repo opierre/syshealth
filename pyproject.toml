@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "syshealth"
-version = "0.0.2"
+version = "0.0.3"
 description = "A lightweight computer constants monitor using Rust and Python"
 readme = "README.md"
 authors = [
@@ -26,6 +26,11 @@ dependencies = [
     "rich==15.0.0",
     "pygments>=2.20.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/opierre/syshealth"
+Repository = "https://github.com/opierre/syshealth"
+Issues = "https://github.com/opierre/syshealth/issues"
 
 [project.scripts]
 syshealth = "syshealth.cli:app"
