@@ -369,6 +369,12 @@ SysHealth POSTs the same JSON snapshot to the VictoriaMetrics import endpoint.
 > [!NOTE]
 > Query stored metrics via MetricsQL or `/api/v1/query` using field names as metric names, e.g. `cpu_usage`, `ram_percent`.
 
+### Grafana Dashboard Example
+
+A complete and pre-configured Grafana dashboard template for VictoriaMetrics is provided in the [`resources/grafana-dashboard.json`](resources/grafana-dashboard.json) file. You can import this JSON directly into your Grafana instance to instantly get a comprehensive visualization of your SysHealth metrics.
+
+![Grafana Dashboard Example](resources/SysHealth_System_Dashboard.png)
+
 ---
 
 ## 📄 License
